@@ -23,4 +23,11 @@
 - entity
 
 ## terrain
-terrain is perceived in separate structure
+Terrain is perceived in separate structure.
+Parts of terrain:
+ 
+- goals
+- obstacles
+
+## tasks
+
