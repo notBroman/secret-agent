@@ -1,19 +1,23 @@
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-gradle
+server/target
+server/logs
+server/replays
+server/results
+server/graphs
+target
+monitor/node
+monitor/node_modules
+monitor/src/main/resources/www/main.js
+monitor/js/*.js
+*.iml
+.idea
+*.DS_Store
+docs/*.html
 .gradle
-build/
-replays/
-gradlew
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
-logging.properties
+graphs
+results
+replays
+logs
+starterKits/jasonDummyA/build
+starterKits/jasonDummyA/.gradle
+starterKits/jasonDummyB/build
+starterKits/jasonDummyB/.gradle
