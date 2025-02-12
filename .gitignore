@@ -14,6 +14,9 @@ monitor/js/*.js
 docs/*.html
 .gradle
 gradle/
+build/*
+settings.gradle
+*.properties
 graphs
 results
 replays
