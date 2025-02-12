@@ -13,6 +13,7 @@ monitor/js/*.js
 *.DS_Store
 docs/*.html
 .gradle
+gradle/
 graphs
 results
 replays
