@@ -25,3 +25,4 @@ starterKits/jasonDummyA/build
 starterKits/jasonDummyA/.gradle
 starterKits/jasonDummyB/build
 starterKits/jasonDummyB/.gradle
+*.log
