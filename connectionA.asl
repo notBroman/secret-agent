@@ -1,40 +1,52 @@
 /* Initial beliefs */
 
 me(0,0).
-current_task(0).
-goal(0,0).
-dispensor_0(nan, nan).
-dispensor_1(nan, nan).
+current_task(nan).
+goal(nan,nan).
+dispensers([]).
 
 /* Rules */
 
 close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, OPTIONS, DIR)).
+has_block :- false.
+at_submission :- false.
+correct_config :- false.
+at_dispenser :- flase.
+closest_dispenser(DX, DY) :- false.
+closest_submission(SX, SY) :- false.
+
 
 !start.
 
 /* Plans */
 
 // use the think goal to deliberate what to do
-// take task
-// go to dispensor
-// go to submission point
-// submit the task
 +!think : true <- .print("(╭ರ_•́)"); skip.
-// move toward dispenser
-+!think : not has_block & not at_dispensor & closest_dispensor(DX, DY) & goal(X, Y)
+// take task
++!think : current_task(nan) <- !accept_task.
+// submit the task
++!think : has_block & at_submission & not correct_config 
+	<- !reconfig.
++!think : has_block & at_submission & correct_config
+	<- !submit_structure.
+// go to dispenser
++!think : not has_block(_) & not at_dispenser & closest_dispenser(DX, DY) & goal(X, Y)
 	<- -goal(X, Y); +goal(DX, DY); !reach_goal.
 // move toward submission with block
-+!think : has_block & not at_submission & closest_submission(SX, SY) & goal(X, Y) 
++!think : has_block(_) & not at_submission & closest_submission(SX, SY) & goal(X, Y) 
 	<- -goal(X, Y); +goal(SX, SY); !reach_goal.
-// take block from dispensor
-+!think : not has_block & at_dispensor & not block_adjacent 
+// take block from dispenser
++!think : not has_block & at_dispenser & not block_adjacent 
 	<- !dispense_block.
 // attach to block
-+!think : not has_blockk & at_dispensor & block_adjacent 
++!think : not has_block(X) & at_dispenser & block_adjacent 
 	<- !attach_block.
 
 +!attach_block : true <- true.
 +!dispense_block : true <- true.
++!accept_task : true <- true.
++!reconfig : true <- true.
++!submit_structure : <- true : true.
 
 +!start : true <- 
 	.print("hello massim world.").
