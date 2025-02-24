@@ -6,8 +6,9 @@ import jason.asSemantics.*;
 import jason.asSyntax.*;
 import jason.bb.*;
 import jason.stdlib.*;
+import jason.util.*;
 
-import java.util.Iterator;
+import java.util.*;
 
 public class mergePerceptions extends DefaultInternalAction {
 	public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
@@ -23,24 +24,28 @@ public class mergePerceptions extends DefaultInternalAction {
 					break;
 				case "goal":
 					// see if the goal is new or has already been seen
-					int x = (int)(((NumberTerm)percept.getTerm(0)).solve());
-					int y = (int)(((NumberTerm)percept.getTerm(1)).solve());
-					Vec2 pos = new Vec2(x, y);
-					Literal dest = beliefs.contains(new Atom("destinations"));
 					Literal me = beliefs.contains(new Atom("me"));
-					int me_x = (int)(((NumberTerm)me.getTerm(0)).solve());
-					int me_y = (int)(((NumberTerm)me.getTerm(1)).solve());
-					Vec2 me_vec = new Vec2(me_x, me_y);
-					pos.add(me_vec);
+					Vec2 me_vec = new Vec2((int)(((NumberTerm)me.getTerm(0)).solve()),
+								(int)(((NumberTerm)me.getTerm(1)).solve()));
+					Vec2 goal_pos = new Vec2((int)(((NumberTerm)percept.getTerm(0)).solve()),
+								 (int)(((NumberTerm)percept.getTerm(1)).solve()));
+					goal_pos.add(me_vec);
 
-					Term dest_term = dest.getTerm(0);
-
-					if (dest_term.isMap()) {
-						StringTermImpl key = new StringTermImpl(pos.toString());
-						if(!dest_term.get(key)){
-							dest_term.put(key, new ObjectTermImpl(pos));
+					Literal dest = beliefs.contains(new Atom("destinations"));
+					if (dest.isList()){
+						// convert it into a list
+						List<Term> dest_list = dest.getTerms();
+						// iterate through all the goals in destination
+						ObjectTerm goal_pos_term = goal_pos.toTerm();
+						if(!dest_list.contains(goal_pos_term)){
+							dest_list.add(goal_pos_term);
+							// abolish destinations belief an reinstate it
+							beliefs.abolish();
+							beliefs.add();
 						}
+						
 					}
+
 					break;
 				default:
 					break;

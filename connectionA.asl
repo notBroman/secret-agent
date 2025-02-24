@@ -4,6 +4,7 @@ me(0,0).
 current_task(nan).
 destination(nan,nan).
 attached_blocks([]).
+destinations([]).
 
 /* Rules */
 
@@ -48,11 +49,7 @@ closest_submission(SX, SY) :- false.
 +!submit_structure : true <- true.
 
 +!start : true <- 
-	.print("hello massim world.");
-	.map.create(D);
-	+destinations(D);
-	.map.create(Disp);
-	+dipsensors(Disp).
+	.print("hello massim world.").
 
 +!reach_destination : goal(0,0) <- .print("We have arrived"); .update_memory; -reach_goal.
 +!reach_destination : goal(X,Y) & not (Y == 0) & close_in([s, n], Y, DIR) <-
