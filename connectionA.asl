@@ -20,7 +20,7 @@ closest_submission(SX, SY) :- false.
 
 /* Plans */
 
-// use the think destination to deliberate what to do
+// use the think deliberate what to do
 +!think : true <- .print("(╭ರ_•́)"); skip.
 // take task
 +!think : current_task(nan) <- !accept_task.
@@ -61,12 +61,10 @@ closest_submission(SX, SY) :- false.
 	   +destination(X-1, Y);
 	   move(DIR).
 
-+!handlePercepts(AGENTNAME) : goal(A, B) & destinations(D) <- -goal(A,B).
-+!handlePercepts(AGENTNAME) : true <- .print("No goals found").
 
 +step(X) : true & name(AGENTNAME) <-
-	.print("Received step percept.");
-	!handlePercepts(AGENTNAME).
+	myLib.perception.mergePerceptions;
+	.print("Received step percept.").
 	
 +actionID(X) : true <- 
 	.print("Determining my action");
