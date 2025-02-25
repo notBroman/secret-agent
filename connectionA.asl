@@ -44,12 +44,18 @@ me(0,0).
 	   +destination(X-1, Y);
 	   move(DIR).
 
-+!addGoals : not my_goal(_,_) & goal(_,_) 
++!addGoals : not my_goal(_,_) & goal(_,_) & me(Mx, My)
 	<- for (goal(X,Y)){
-		-goal(X,Y); +my_goal(X,Y);
+		-goal(X,Y); +my_goal(X + Mx, Y + My);
 	}.
 +!addGoals : my_goal(_,_) <- .print("Already know goals").
 +!addGoals : not goal(_,_) <- .print("No goals in vision").
+
++!addDispensers : not my_b0(_,_) & thing(X,Y,dispenser,b0) & me(Mx, My) <- +my_b0(Mx + X, My + Y).
++!addDispensers : not my_b1(_,_) & thing(X,Y,dispenser,b1) & me(Mx, My) <- +my_b1(Mx + X, My + Y).
++!addDispensers : not thing(_,_,dispenser,_) <- .print("No dispensers in vision").
++!addDispensers : my_b0(_,_) | my_b1(_,_) <- .print("Already found my dispensers").
++!addDispensers : true <- true.
 
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
 	<- -me(X,Y); +me(NX, NY).
