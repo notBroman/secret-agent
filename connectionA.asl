@@ -23,6 +23,7 @@ me(0,0).
 +step(X) : true <-
 	.print("Received step percept.");
 	!updateMyPos;
+	!addDispensers;
 	!addGoals.
 	
 +actionID(X) : true <- 
