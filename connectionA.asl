@@ -1,9 +1,12 @@
 /* rules */
 random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
+cardinalDirectionToNum(CardinalDir, X, Y, NX, NY) :- (CardinalDir == n & NY = Y - 1 ) | (CardinalDir == s & NY = Y + 1 ) | (CardinalDir == e & NX = X + 1 ) | (CardinalDir == w & NX = X - 1 ).
 
 close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, OPTIONS, DIR)).
 
 /* Initial beliefs */
+
+me(0,0).
 
 /* Initial goals */
 
@@ -16,6 +19,7 @@ close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, O
 
 +step(X) : true <-
 	.print("Received step percept.");
+	!updateMyPos;
 	!addGoals.
 	
 +actionID(X) : true <- 
@@ -43,3 +47,7 @@ close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, O
 	}.
 +!addGoals : my_goal(_,_) <- .print("Already know goals").
 +!addGoals : not goal(_,_) <- .print("No goals in vision").
+
++!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y)
+	<- .print("Moved successfully").
++!updateMyPos : true <- .print("No change").
