@@ -1,22 +1,25 @@
-/* Initial beliefs and rules */
-random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
+{ include("action/actions.asl", action) }
 
-/* Initial goals */
-
-!start.
+start.
 
 /* Plans */
 
 +!start : true <- 
-	.print("hello massim world.").
+	.print("[INFO] hello massim world.").
 
 +step(X) : true <-
-	.print("Received step percept.").
-	
-+actionID(X) : true <- 
-	.print("Determining my action");
-	!move_random.
-//	skip.
-
-+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
-<-	move(Dir).
+	.my_name(Me);
+	.print("[INFO] Received step percept.",X);
+/*     firstToStop(Me, Flag);
+    .print("[DEBUG] firstToStop called by ", Me, " Result: ", Flag);
+	plannerResult(Flag);
+	.print("[DEBUG] plannerResult called by ",Flag); */
+	plannerDone;
+	joinRetrievers(Flag);
+	setTargetGoal(1, Me, 1, 2, "side");
+	updateRetrieverAvailablePos(1, 2);
+	getTargetGoal;
+	// Must be request
+	?getTargetGoalResult(GoalAgent, GoalX, GoalY, Side);
+    .print("[DBG] getTargetGoal result:", GoalAgent," ", GoalX," ", GoalY," ", Side);
+	.
