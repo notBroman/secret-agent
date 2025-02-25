@@ -48,6 +48,6 @@ me(0,0).
 +!addGoals : my_goal(_,_) <- .print("Already know goals").
 +!addGoals : not goal(_,_) <- .print("No goals in vision").
 
-+!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y)
-	<- .print("Moved successfully").
++!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
+	<- -me(X,Y); +me(NX, NY).
 +!updateMyPos : true <- .print("No change").
