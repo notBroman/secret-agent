@@ -15,7 +15,8 @@ close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, O
 	.print("hello massim world.").
 
 +step(X) : true <-
-	.print("Received step percept.").
+	.print("Received step percept.");
+	!addGoals.
 	
 +actionID(X) : true <- 
 	.print("Determining my action");
@@ -36,3 +37,9 @@ close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, O
 	   +destination(X-1, Y);
 	   move(DIR).
 
++!addGoals : not my_goal(_,_) & goal(_,_) 
+	<- for (goal(X,Y)){
+		-goal(X,Y); +my_goal(X,Y);
+	}.
++!addGoals : my_goal(_,_) <- .print("Already know goals").
++!addGoals : not goal(_,_) <- .print("No goals in vision").
