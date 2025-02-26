@@ -23,27 +23,32 @@ me(0,0).
 +step(X) : true <-
 	.print("Received step percept.");
 	!updateMyPos;
+	//!cullTaskList;
 	!addDispensers;
 	!addGoals.
 	
 +actionID(X) : true <- 
 	.print("Determining my action");
-	!move_random.
+	!think.
 //	skip.
+
+//deliberate on what to do
++!think : my_b0(X, Y) & not destination(_, _) <- +destination(X, Y); !reach_destination.
++!think : my_b1(X, Y) & not destination(_, _) <- +destination(X, Y); !reach_destination.
++!think : not my_b0(_, _) & not my_b1(_, _) <- !move_random.
++!think : destination(_,_) <- !reach_destination.
++!think : true <- true.
 
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
 
-+!reach_destination : goal(0,0) <- .print("We have arrived"); .update_memory; -reach_goal.
-+!reach_destination : goal(X,Y) & not (Y == 0) & close_in([s, n], Y, DIR) <-
-	   -destination(X, Y);
-	   +destination(X, Y-1);
++!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); skip.
++!reach_destination : destination(X,Y) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
 	   move(DIR).
-+!reach_destination : goal(X, Y) & not (X == 0) & close_in([w, e], X, DIR) <-
-	   -destination(X, Y);
-	   +destination(X-1, Y);
++!reach_destination : destination(X, Y) & me(Mx, My) & not (X == Mx) & close_in([w, e], X-Mx, DIR) <-
 	   move(DIR).
++!reach_destination : true <- skip.
 
 +!addGoals : not my_goal(_,_) & goal(_,_) & me(Mx, My)
 	<- for (goal(X,Y)){
@@ -55,9 +60,18 @@ me(0,0).
 +!addDispensers : not my_b0(_,_) & thing(X,Y,dispenser,b0) & me(Mx, My) <- +my_b0(Mx + X, My + Y).
 +!addDispensers : not my_b1(_,_) & thing(X,Y,dispenser,b1) & me(Mx, My) <- +my_b1(Mx + X, My + Y).
 +!addDispensers : not thing(_,_,dispenser,_) <- .print("No dispensers in vision").
-+!addDispensers : my_b0(_,_) | my_b1(_,_) <- .print("Already found my dispensers").
-+!addDispensers : true <- true.
++!addDispensers : my_b0(_,_) & my_b1(_,_) <- .print("Already found my dispensers").
++!addDispensers : true <- .print("What?").
 
++!cullTaskList : task(_,_,_,_) & step(S) 
+	<- for (task(Name,Deadline,Rew,Req)){
+		if (Deadline < S) {
+			-task(Name, Deadline, Rew, Req);
+		}
+	}.
++!cullTaskList : true <- true.
+
+@updateMyPos[atomic]
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
 	<- -me(X,Y); +me(NX, NY).
 +!updateMyPos : true <- .print("No change").
