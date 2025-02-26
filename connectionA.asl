@@ -23,7 +23,6 @@ me(0,0).
 +step(X) : true <-
 	.print("Received step percept.");
 	!updateMyPos;
-	//!cullTaskList;
 	!addDispensers;
 	!addGoals.
 	
@@ -33,17 +32,19 @@ me(0,0).
 //	skip.
 
 //deliberate on what to do
-+!think : my_b0(X, Y) & not destination(_, _) <- +destination(X, Y); !reach_destination.
-+!think : my_b1(X, Y) & not destination(_, _) <- +destination(X, Y); !reach_destination.
++!think : not at_hopper(_) & not has_block(_) & my_b0(X, Y) & not destination(_, _) <- +destination(X-1, Y); !reach_destination.
++!think : not at_hopper(_) & not has_block(_) & my_b1(X, Y) & not destination(_, _) <- +destination(X-1, Y); !reach_destination.
 +!think : not my_b0(_, _) & not my_b1(_, _) <- !move_random.
-+!think : destination(_,_) <- !reach_destination.
++!think : not at_hopper(_) & not has_block(_) & destination(_,_) <- !reach_destination.
++!think : at_hopper(_) & not adjacent_block(_) <- !requestBlock.
++!think : at_hopper(_) & not has_block(_) & adjacent_block(List) <- skip.
 +!think : true <- true.
 
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
 
-+!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); skip.
++!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); !isHopper(X+1, Y); skip.
 +!reach_destination : destination(X,Y) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
 	   move(DIR).
 +!reach_destination : destination(X, Y) & me(Mx, My) & not (X == Mx) & close_in([w, e], X-Mx, DIR) <-
@@ -63,13 +64,7 @@ me(0,0).
 +!addDispensers : my_b0(_,_) & my_b1(_,_) <- .print("Already found my dispensers").
 +!addDispensers : true <- .print("What?").
 
-+!cullTaskList : task(_,_,_,_) & step(S) 
-	<- for (task(Name,Deadline,Rew,Req)){
-		if (Deadline < S) {
-			-task(Name, Deadline, Rew, Req);
-		}
-	}.
-+!cullTaskList : true <- true.
+!isHopper(X, Y) : my_b0(X, Y) | my_b1(X, Y) <- at_hopper(true); request(e).
 
 @updateMyPos[atomic]
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
