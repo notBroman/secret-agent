@@ -1,8 +1,8 @@
 /* rules */
 random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
-cardinalDirectionToNum(CardinalDir, X, Y, NX, NY) :- (CardinalDir == n & NY = Y - 1 & NX = X) | 
-							(CardinalDir == s & NY = Y + 1 & NX = X ) | 
-							(CardinalDir == e & NX = X + 1 & NY = Y) | 
+cardinalDirectionToNum(CardinalDir, X, Y, NX, NY) :- (CardinalDir == n & NY = Y - 1 & NX = X) |
+							(CardinalDir == s & NY = Y + 1 & NX = X) |
+							(CardinalDir == e & NX = X + 1 & NY = Y) |
 							(CardinalDir == w & NX = X - 1 & NY = Y).
 
 close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, OPTIONS, DIR)).
@@ -26,25 +26,28 @@ me(0,0).
 	!addDispensers;
 	!addGoals.
 	
-+actionID(X) : true <- 
-	.print("Determining my action");
-	!think.
++actionID(X) : true | adjacent_thing(L, dispenser) <-
+	.print("Determining my action", L).
+//	!think.
 //	skip.
 
 //deliberate on what to do
-+!think : not at_hopper(_) & not has_block(_) & my_b0(X, Y) & not destination(_, _) <- +destination(X-1, Y); !reach_destination.
-+!think : not at_hopper(_) & not has_block(_) & my_b1(X, Y) & not destination(_, _) <- +destination(X-1, Y); !reach_destination.
-+!think : not my_b0(_, _) & not my_b1(_, _) <- !move_random.
-+!think : not at_hopper(_) & not has_block(_) & destination(_,_) <- !reach_destination.
-+!think : at_hopper(_) & not adjacent_block(_) <- !requestBlock.
-+!think : at_hopper(_) & not has_block(_) & adjacent_block(List) <- skip.
+// get to the destination
++!think : destination(_, _) <- .print("Go to destination"); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b0(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X-1, Y); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b1(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X-1, Y); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not my_b0(_, _) & not my_b1(_, _) <- !move_random.
++!think : attached(_) & my_goal(X, Y) <- destination(X,Y).
+// what to do when at dispenser
++!think : adjacent_Thing(ListDispenser, dispeneser) & not adjacent_Thing(_, block) <- .print("At a dispenser, requesting block"); !requestBlock(ListDispenser).
++!think : adjacent_Thing(_, dispenser) & not attached(_) & adjacent_Thing(List,block) & .nth(0, List, B) <- .print("Attach block from dispenser"); attach(B).
 +!think : true <- true.
 
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
 
-+!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); !isHopper(X+1, Y); skip.
++!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); -destination(X, Y).
 +!reach_destination : destination(X,Y) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
 	   move(DIR).
 +!reach_destination : destination(X, Y) & me(Mx, My) & not (X == Mx) & close_in([w, e], X-Mx, DIR) <-
@@ -61,10 +64,22 @@ me(0,0).
 +!addDispensers : not my_b0(_,_) & thing(X,Y,dispenser,b0) & me(Mx, My) <- +my_b0(Mx + X, My + Y).
 +!addDispensers : not my_b1(_,_) & thing(X,Y,dispenser,b1) & me(Mx, My) <- +my_b1(Mx + X, My + Y).
 +!addDispensers : not thing(_,_,dispenser,_) <- .print("No dispensers in vision").
-+!addDispensers : my_b0(_,_) & my_b1(_,_) <- .print("Already found my dispensers").
++!addDispensers : my_b0(_,_) | my_b1(_,_) <- .print("Already found my dispensers").
 +!addDispensers : true <- .print("What?").
 
-!isHopper(X, Y) : my_b0(X, Y) | my_b1(X, Y) <- at_hopper(true); request(e).
++!requestBlock(ListHopper) : .nth(0, ListHopper, Dir) <- request(Dir).
+
++adjacent_Thing(List,Thing) : true <- for(thing(X, Y, Thing, _)){
+				if (X == 1 & Y == 0) {
+					.append(List, e)
+				} elif (X == -1 & Y == 0){
+					.append(List, w)
+				} elif (X == 0 & Y == 1){
+					.append(List, s)
+				} elif (X == 0 & Y == -1){
+					.append(List, n)
+				}
+			}; -adjacent(List, Thing).
 
 @updateMyPos[atomic]
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
