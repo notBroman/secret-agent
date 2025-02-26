@@ -241,11 +241,14 @@ public class EISAdapter extends Environment implements AgentListener {
 
             // Handle addServerName action
             if (action.getFunctor().equals("addServerName")) {
-                String agent = ((Atom) action.getTerm(0)).getFunctor();
-                String agentServer = ((Atom) action.getTerm(1)).getFunctor();
-
+                String agent, agentServer;
+                
+                agent = ((Atom) action.getTerm(0)).getFunctor();
+                agentServer = ((StringTerm) action.getTerm(1)).getString();
+     
+            
                 teamManager.addServerName(agent, agentServer);
-                logger.info("[DEBUG] addServerName called by " + agName + " -> " + agentServer);
+                logger.info("[DEBUG] addServerName 被 " + agName + " 调用 -> " + agentServer);
                 return true;
             }
 
@@ -620,6 +623,11 @@ public class EISAdapter extends Environment implements AgentListener {
                 return true;
             }
 
+
+            logger.info("[DEBUG] Agent: " + agName + " is attempting to perform action: " + action);
+            Action convertedAction = literalToAction(action);
+            logger.info("[DEBUG] Converted Action: " + convertedAction);
+    
             ei.performAction(agName, literalToAction(action));
             return true;
         } catch (ActException e) {
