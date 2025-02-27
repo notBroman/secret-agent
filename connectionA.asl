@@ -7,6 +7,12 @@ cardinalDirectionToNum(CardinalDir, X, Y, NX, NY) :- (CardinalDir == n & NY = Y 
 
 close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, OPTIONS, DIR)).
 
+adjacent_disp(L) :- .findall( thing(X, Y, D, T), (math.abs(X) + math.abs(Y) == 1), L ).
+
+distance(X, Y, R) :- R = math.abs(X) + math.abs(Y).
+
+is_adjacent(X,Y) :- distance(X, Y, R) & R == 1.
+
 /* Initial beliefs */
 
 me(0,0).
@@ -26,16 +32,16 @@ me(0,0).
 	!addDispensers;
 	!addGoals.
 	
-+actionID(X) : true | adjacent_thing(L, dispenser) <-
-	.print("Determining my action", L).
-//	!think.
++actionID(X) : true | adjacent_disp(L) <-
+	.print(L);
+	!think.
 //	skip.
 
 //deliberate on what to do
 // get to the destination
 +!think : destination(_, _) <- .print("Go to destination"); !reach_destination.
-+!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b0(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X-1, Y); !reach_destination.
-+!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b1(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X-1, Y); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b0(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X, Y); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b1(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X, Y); !reach_destination.
 +!think : not adjacent_Thing(_, dispenser) & not my_b0(_, _) & not my_b1(_, _) <- !move_random.
 +!think : attached(_) & my_goal(X, Y) <- destination(X,Y).
 // what to do when at dispenser
@@ -47,6 +53,7 @@ me(0,0).
 <-	move(Dir).
 
 
++!reach_destination : thing(Dx, Dy, dispenser, _) & destination(X,Y) & (my_b0(X, Y) | my_b1(X, Y)) & is_adjacent(Dx, Dy) <- .print("We are next to a dispenser"); -destination(X, Y).
 +!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); -destination(X, Y).
 +!reach_destination : destination(X,Y) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
 	   move(DIR).
@@ -68,18 +75,6 @@ me(0,0).
 +!addDispensers : true <- .print("What?").
 
 +!requestBlock(ListHopper) : .nth(0, ListHopper, Dir) <- request(Dir).
-
-+adjacent_Thing(List,Thing) : true <- for(thing(X, Y, Thing, _)){
-				if (X == 1 & Y == 0) {
-					.append(List, e)
-				} elif (X == -1 & Y == 0){
-					.append(List, w)
-				} elif (X == 0 & Y == 1){
-					.append(List, s)
-				} elif (X == 0 & Y == -1){
-					.append(List, n)
-				}
-			}; -adjacent(List, Thing).
 
 @updateMyPos[atomic]
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0, ActionParams, LastAction) & me(X,Y) & cardinalDirectionToNum(LastAction, X, Y, NX, NY)
