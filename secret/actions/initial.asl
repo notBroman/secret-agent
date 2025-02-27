@@ -9,6 +9,7 @@
 +stock::agt_Map_Ent(Agt,[]);
 +stock::agt_Map_Blo(Agt,[]);
 +stock::agt_Map_Dis(Agt,[]);
++stock::agt_Map_Edg(Agt,[]);
 +stock::agt_Pos(Agt, 0 ,0 );	
 +common::roles(Agt,explorer);
 .print("Init Agent Done: ", Agt);
