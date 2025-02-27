@@ -5,14 +5,14 @@ cardinalDirToNum(CardinalDir,X,Y,NX,NY) :- (CardinalDir == n & NY = Y - 1 & NX =
 							(CardinalDir == e & NX = X + 1 & NY = Y) |
 							(CardinalDir == w & NX = X - 1 & NY = Y).
 
-numToCardinalDir(X,Y,L) :- (X > 0 & .add(L,e)) | 
-				(X < 0 & .add(L,w)) |
-				(Y > 0 & .add(L,s)) |
-				(Y < 0 & .add(L,n)).
+numToCardinalDir(X,Y,L) :- (X > 0 & L = e) | 
+				(X < 0 & L = w) |
+				(Y > 0 & L = s) |
+				(Y < 0 & L = n).
 
 close_in(OPTIONS,DIST,DIR) :- (DIST > 0  & .nth(1,OPTIONS,DIR)) | (.nth(0,OPTIONS,DIR)).
 
-adjacent_thing(L,Thing) :- .findall(thing(X,Y,Thing,T),(thing(X,Y,Thing,T)&is_adjacent(X,Y)),L).
+adjacent_thing(L,Thing) :- .findall(thing(X,Y),(thing(X,Y,Thing,T)&is_adjacent(X,Y)),List) & not .empty(List) & .nth(0, List, thing(A,B)) & is_adjacent(A,B) & numToCardinalDir(A,B,L).
 
 distance(X,Y,R) :- R = math.abs(X) + math.abs(Y).
 
@@ -37,30 +37,31 @@ me(0,0).
 	!addDispensers;
 	!addGoals.
 	
-+actionID(X) : adjacent_thing(L,dispenser) 
-	<- .print(L); !think.
++actionID(X) : true <- !think.
 //	skip.
 
 //deliberate on what to do
+// when to do exploration
++!think : not attached(_,_) & not my_b0(_,_) & not my_b1(_,_) <- !move_random.
++!think : attached(_,_) & not my_goal(X,Y) <- !move_random.
 // get to the destination
 +!think : destination(_,_,_) <- .print("Go to destination"); !reach_destination.
-+!think : not adjacent_Thing(_,dispenser) & not attached(_) & my_b0(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser"); +destination(X,Y,hopper); !reach_destination.
-+!think : not adjacent_Thing(_,dispenser) & not attached(_) & my_b1(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser"); +destination(X,Y,hopper); !reach_destination.
-+!think : not adjacent_Thing(_,dispenser) & not my_b0(_,_) & not my_b1(_,_) <- !move_random.
-+!think : attached(_) & my_goal(X,Y) <- destination(X,Y,g).
++!think : not adjacent_thing(D,dispenser) & not attached(_,_) & my_b0(X,Y) & not destination(_,_,_) 
+	<- .print("Go to dispenser", D); +destination(X,Y,destination); !reach_destination.
++!think : not adjacent_thing(D,dispenser) & not attached(_,_) & my_b1(X,Y) & not destination(_,_,_) 
+	<- .print("Go to dispenser", D); +destination(X,Y,destination); !reach_destination.
++!think : attached(_,_) & my_goal(X,Y) <- +destination(X,Y,g); !reach_destination.
 // what to do when at dispenser
-+!think : adjacent_Thing(ListDispenser,dispeneser) & not adjacent_Thing(_,block) <- .print("At a dispenser,requesting block"); !requestBlock(ListDispenser).
-+!think : adjacent_Thing(_,dispenser) & not attached(_) & adjacent_Thing(List,block) & .nth(0,List,B) <- .print("Attach block from dispenser"); attach(B).
++!think : adjacent_thing(ListDispenser,dispenser) & not .empty(ListDispenser) & not thing(_,_,block,_)<- .print("At a dispenser, requesting block"); !requestBlock(ListDispenser).
++!think : adjacent_thing(D,dispenser) & not .empty(D) & not attached(_,_) & adjacent_thing(B,block) <- .print("Attach block from dispenser"); attach(B).
 +!think : true <- true.
 
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
 // terminal conditions
-+!reach_destination : me(Mx,My) & destination(X,Y,T) & T == hopper  & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
-+!reach_destination : me(X,Y) & destination(X,Y,T) & not (T == hopper) <- .print("We have arrived"); -destination(X,Y,T).
++!reach_destination : me(Mx,My) & destination(X,Y,T) & T == destination  & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
++!reach_destination : me(X,Y) & destination(X,Y,T) & not (T == destination) <- .print("We have arrived"); -destination(X,Y,T).
 // movement logic
 +!reach_destination : destination(X,Y,_) & me(Mx,My) & not (Y == My) & close_in([n,s],Y-My,DIR) <-
 	   move(DIR).
@@ -81,7 +82,7 @@ me(0,0).
 +!addDispensers : my_b0(_,_) | my_b1(_,_) <- .print("Already found my dispensers").
 +!addDispensers : true <- .print("What?").
 
-+!requestBlock(ListHopper) : .nth(0,ListHopper,Dir) <- request(Dir).
++!requestBlock(Dir) : true <- request(Dir).
 
 @updateMyPos[atomic]
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
