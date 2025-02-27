@@ -1,25 +1,69 @@
-{ include("action/actions.asl", action) }
+/* {include("actions/exploration.asl", exploration) } */
+{include("actions/action.asl",action)}
+{include("actions/initial.asl",init) }
+{include("actions/stock.asl",stock)}
+{include("actions/evalu.asl",evalu)}
 
-start.
+random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
+
+	
+!start.
 
 /* Plans */
 
-+!start : true <- 
-	.print("[INFO] hello massim world.").
++!start : true 
+<- 
+.print("hello massim world.");
+.my_name(Me);
+!init::initialAgent(Me);
+.
 
-+step(X) : true <-
-	.my_name(Me);
-	.print("[INFO] Received step percept.",X);
-/*     firstToStop(Me, Flag);
-    .print("[DEBUG] firstToStop called by ", Me, " Result: ", Flag);
-	plannerResult(Flag);
-	.print("[DEBUG] plannerResult called by ",Flag); */
-	plannerDone;
-	joinRetrievers(Flag);
-	setTargetGoal(1, Me, 1, 2, "side");
-	updateRetrieverAvailablePos(1, 2);
-	getTargetGoal;
-	// Must be request
-	?getTargetGoalResult(GoalAgent, GoalX, GoalY, Side);
-    .print("[DBG] getTargetGoal result:", GoalAgent," ", GoalX," ", GoalY," ", Side);
-	.
+/* Percept */
++obstacle(X,Y) 
+: true 
+<-
+.my_name(Agt);
+.print("here are obstacle",Agt," ", X," ", Y);
+!stock::agtMemory(Agt,X,Y,obstacle,[]);
+.
+
++goal(X,Y)
+: true 
+<-
+.my_name(Agt);
+/* .print("Goal: ",Agt, " ", X , " " ,Y); */
+!stock::agtMemory(Agt,X,Y,goal,[]);
+.   
+
++thing(X,Y,dispenser,Detail)
+: true 
+<-
+.my_name(Agt);
+/* .print("Dispenser: ",Agt, " ", X , " " ,Y); */
+!stock::agtMemory(Agt,X,Y,dispenser,Detail);
+.
+
++thing(X,Y,entity,Detail)
+: true 
+<-
+.my_name(Agt);
+/* .print("Entity: ",Agt, " ", X , " " ,Y); */
+.
+
++thing(X,Y,block,Detail)
+: true 
+<-
+.my_name(Agt);
+/* .print("block: ",Agt, " ", X , " " ,Y); */
+.
+
++actionID(X) : true <- 
+	.print("Determining my action");
+	!move_random;
+    .
+//	skip.
+
++!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
+<-	!action::move(Dir).
+
+
