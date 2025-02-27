@@ -5,9 +5,14 @@ cardinalDirectionToNum(CardinalDir, X, Y, NX, NY) :- (CardinalDir == n & NY = Y 
 							(CardinalDir == e & NX = X + 1 & NY = Y) |
 							(CardinalDir == w & NX = X - 1 & NY = Y).
 
+numToCardinalDir(X, Y, L) :- (X > 0 & .append(L, e)) | 
+				(X < 0 & .append(L, w)) |
+				(Y > 0 & .append(L, s)) |
+				(Y < 0 & .append(L, n)).
+
 close_in(OPTIONS, DIST, DIR) :- (DIST > 0  & .nth(1, OPTIONS, DIR)) | (.nth(0, OPTIONS, DIR)).
 
-adjacent_disp(L) :- .findall( thing(X, Y, D, T), (math.abs(X) + math.abs(Y) == 1), L ).
+adjacent_thing(L, Thing) :- me(Mx, My) & .findall( thing(X, Y, Thing, _), is_adjacent(X - Mx, Y - My), L ).
 
 distance(X, Y, R) :- R = math.abs(X) + math.abs(Y).
 
@@ -32,7 +37,7 @@ me(0,0).
 	!addDispensers;
 	!addGoals.
 	
-+actionID(X) : true | adjacent_disp(L) <-
++actionID(X) : true | adjacent_disp(L, dispenser) <-
 	.print(L);
 	!think.
 //	skip.
@@ -40,8 +45,10 @@ me(0,0).
 //deliberate on what to do
 // get to the destination
 +!think : destination(_, _) <- .print("Go to destination"); !reach_destination.
-+!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b0(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X, Y); !reach_destination.
-+!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b1(X, Y) & not destination(_, _) <- .print("Go to dispenser"); +destination(X, Y); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b0(X, Y) & not destination(_, _) 
+	<- .print("Go to dispenser"); +destination(X, Y, hopper); !reach_destination.
++!think : not adjacent_Thing(_, dispenser) & not attached(_) & my_b1(X, Y) & not destination(_, _) 
+	<- .print("Go to dispenser"); +destination(X, Y, hopper); !reach_destination.
 +!think : not adjacent_Thing(_, dispenser) & not my_b0(_, _) & not my_b1(_, _) <- !move_random.
 +!think : attached(_) & my_goal(X, Y) <- destination(X,Y).
 // what to do when at dispenser
@@ -52,10 +59,11 @@ me(0,0).
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
-
-+!reach_destination : thing(Dx, Dy, dispenser, _) & destination(X,Y) & (my_b0(X, Y) | my_b1(X, Y)) & is_adjacent(Dx, Dy) <- .print("We are next to a dispenser"); -destination(X, Y).
-+!reach_destination : me(X,Y) & destination(X,Y) <- .print("We have arrived"); -destination(X, Y).
-+!reach_destination : destination(X,Y) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
+// terminal conditions
++!reach_destination : me(Mx, My) & destination(X,Y,T) & T == hopper  & is_adjacent(X-Mx, Y-My) <- .print("We are next to a dispenser"); -destination(X, Y).
++!reach_destination : me(X,Y) & destination(X,Y,T) & not (T == hopper) <- .print("We have arrived"); -destination(X, Y).
+// movement logic
++!reach_destination : destination(X,Y,_) & me(Mx, My) & not (Y == My) & close_in([n, s], Y-My, DIR) <-
 	   move(DIR).
 +!reach_destination : destination(X, Y) & me(Mx, My) & not (X == Mx) & close_in([w, e], X-Mx, DIR) <-
 	   move(DIR).
