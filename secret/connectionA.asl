@@ -1,8 +1,6 @@
 /* {include("actions/exploration.asl", exploration) } */
 {include("actions/action.asl",action)}
 {include("actions/initial.asl",init) }
-{include("actions/stock.asl",stock)}
-{include("actions/evalu.asl",evalu)}
 {include("actions/percept.asl",per)}
 
 random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
@@ -22,7 +20,6 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 +actionID(S) : true <- 
 	/* .print("Determining my action"); */
     +lock::token(S);
-    .print(S);
     .my_name(Me);
     if (S ==  (0))
     {
@@ -33,37 +30,42 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     
     if (lastAction(move))
     {
+        .wait(100);
         ?stock::agt_Pos(Me, Sa,  CX, CY);
-        .print("hererererere, "," ",Me, " ",Sa ," ",S, " ", CX, " ", CY);
+        ?lastActionParams([Direction]);
+        if ( Direction == n  ) 
+        {
+            NewX = CX ;
+            NewY = (CY - 1);
+            Edg = [0,(CY - 1)];
+            
+        }
+        elif (Direction == s) 
+        {
+            NewX = CX;
+            NewY = (CY + 1);
+            Edg = [0,(CY + 1)];
+        } 
+        elif (Direction == e)  
+        {
+            NewX = (CX + 1);
+            NewY = CY; 
+            Edg = [(CX + 1),0];
+        }
+        elif (Direction == w) 
+        {
+            NewX = (CX - 1);
+            NewY = CY;
+            Edg = [(CX - 1),0];
+        }
+
         if (lastActionResult(success))
         {
             .print("lastActionResult success");
-            
-    
-            ?lastActionParams([Direction]);
+                        
             +lock::updatePos_token(pos,S,Me);
             
-            if ( Direction == n  ) 
-            {
-                NewX = CX ;
-                NewY = (CY - 1);
-                
-            }
-            elif (Direction == s) 
-            {
-                NewX = CX;
-                NewY = (CY + 1);
-            } 
-            elif (Direction == e)  
-            {
-                NewX = (CX + 1);
-                NewY = CY; 
-            }
-            elif (Direction == w) 
-            {
-                NewX = (CX - 1);
-                NewY = CY;
-            }
+
 
             -stock::agt_Pos(Me, _,  CX, CY); 
             +stock::agt_Pos(Me, S,  NewX, NewY);
@@ -79,8 +81,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
         elif ( lastActionResult(failed_forbidden))
         {
             .print("lastActionResult failed");
-            ?lastActionParams([Direction]);
-            /* !stock::agtMemory(Me,CX,CY,mapEdge,Direction); */
+            !per::location_edg(Me,[Direction,Edg]);
             -lastAction(move);
         }  
     }
@@ -120,6 +121,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
+    -stock::mydispenser(Me,_,_,_,_);
     +stock::mydispenser(Me,S,X,Y,Detail);    
     .
 
@@ -135,7 +137,9 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    +stock::myblock(Me,S,X,Y,Detail);    .
+    -stock::myblock(Me,_,_,_,_);
+    +stock::myblock(Me,S,X,Y,Detail);    
+    .
 
 +!move_random(S)
 : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)

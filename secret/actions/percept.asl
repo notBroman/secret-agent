@@ -25,8 +25,7 @@
     -stock::agt_Map_Obs(Agt,_,_);  
     +stock::agt_Map_Obs(Agt,S,ObsList);
     -stock::myobstacle(Agt,_,_,_);
-        
-    .print("New location "," ",Agt," ", NewX," ", NewY);
+
     .
 
 
@@ -66,3 +65,18 @@
     -stock::agt_Map_Blo(Agt,_,_);  
     +stock::agt_Map_Blo(Agt,S,BloList);
     .
+
++!location_edg(Agt,NewL)
+: stock::agt_Map_Edg(Agt,_)
+<-
+    ?stock::agt_Map_Edg(Agt,OldL);
+    .union(NewL,OldL,EdgList);
+    -stock::agt_Map_Edg(Agt,_);
+    +stock::agt_Map_Edg(Agt,NewL);
+.
++!location_edg(Agt,NewL)
+: not stock::agt_Map_Edg(Agt,_)
+<-
+    -stock::agt_Map_Edg(Agt,_);
+    +stock::agt_Map_Edg(Agt,NewL);
+.
