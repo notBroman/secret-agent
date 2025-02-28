@@ -70,6 +70,8 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 
             !per::location_obstacles(Me,S,NewX,NewY);
             !per::location_goal(Me,S,NewX,NewY);
+            !per::location_dis(Me,S,NewX,NewY);
+            !per::location_blo(Me,S,NewX,NewY);
             -lock::updatePos_token(pos,S,Me);
             -lastAction(move);
             
@@ -111,7 +113,6 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     -stock::mygoal(Me,_,_,_);
     +stock::mygoal(Me,S,X,Y);
     
-
     .
 
 +thing(X,Y,dispenser,Detail)
@@ -119,7 +120,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    +stock::mydispenserl(Me,S,X,Y,dispenser,Detail);    
+    +stock::mydispenser(Me,S,X,Y,Detail);    
     .
 
 +thing(X,Y,entity,Detail)
@@ -132,9 +133,9 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 +thing(X,Y,block,Detail)
 : true 
 <-
-    .my_name(Agt);
-    /* .print("block: ",Agt, " ", X , " " ,Y); */
-    .
+    .my_name(Me);
+    ?actionID(S);
+    +stock::myblock(Me,S,X,Y,Detail);    .
 
 +!move_random(S)
 : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
