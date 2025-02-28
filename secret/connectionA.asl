@@ -2,6 +2,7 @@
 {include("actions/action.asl",action)}
 {include("actions/initial.asl",init) }
 {include("actions/percept.asl",per)}
+{include("actions/communication.asl",com)}
 
 random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,Dir)) | (RandomNumber <= 0.5 & .nth(1,DirList,Dir)) | (RandomNumber <= 0.75 & .nth(2,DirList,Dir)) | (.nth(3,DirList,Dir)).
 
@@ -12,10 +13,16 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 
 +!start : true 
 <- 
-.print("hello massim world.");
 .my_name(Me);
+.print("hello massim world.");
 !init::initialAgent(Me);
+.broadcast(achieve, init::joinTeam);
+?team(Tname)[source(Percept)];
+!init::sortMembers(Tname);
+
+
 .
+
 @atomic
 +actionID(S) : true <- 
 	/* .print("Determining my action"); */
@@ -65,8 +72,6 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
                         
             +lock::updatePos_token(pos,S,Me);
             
-
-
             -stock::agt_Pos(Me, _,  CX, CY); 
             +stock::agt_Pos(Me, S,  NewX, NewY);
 
@@ -88,7 +93,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     
         
         
-    !move_random(S);
+    //!move_random(S);
             
     -lock::token(S);
     .
@@ -128,8 +133,12 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 +thing(X,Y,entity,Detail)
 : true 
 <-
-    .my_name(Agt);
-    /* .print("Entity: ",Agt, " ", X , " " ,Y); */
+    .my_name(Me);
+    ?actionID(S);
+    -stock::myent(Me,S,Detail);
+    +stock::myent(Me,S,Detail);
+    .print("here is entities:",X,Y,Detail);
+    
     .
 
 +thing(X,Y,block,Detail)
@@ -146,4 +155,8 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-	
     !action::move(Dir,S);
     .
+
+
+
+
 
