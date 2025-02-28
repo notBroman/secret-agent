@@ -1,16 +1,15 @@
 +!initialAgent(Agt)
 : true
 <-
-+action::mutexStep(Agt,0);
-+stock::agtMap(Agt,[]);	
-+stock::mutexStep(Agt,[]);	
-+stock::agt_Map_Goa(Agt,[]);	
-+stock::agt_Map_Obs(Agt,[]);	
-+stock::agt_Map_Ent(Agt,[]);
-+stock::agt_Map_Blo(Agt,[]);
-+stock::agt_Map_Dis(Agt,[]);
-+stock::agt_Map_Edg(Agt,[]);
-+stock::agt_Pos(Agt, 0 ,0 );	
-+common::roles(Agt,explorer);
+
++stock::agt_Map_Goa(Me,0,[]);	
++stock::agt_Map_Obs(Me,0,[]);	
++stock::agt_Map_Ent(Me,0,[]);
++stock::agt_Map_Blo(Me,0,[]);
++stock::agt_Map_Dis(Me,0,[]);
++stock::agt_Map_Edg(Me,0,[]);
+
+
++common::roles(Me,S,explorer);
 .print("Init Agent Done: ", Agt);
 .

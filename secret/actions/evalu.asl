@@ -1,8 +1,8 @@
-+!updataAgentPos(Direction,Agt)
++!updataAgentPos(Direction,Agt,X,Y)
 : true
 <- 
-    ?stock::agt_Pos(Agt, X, Y); 
-    .print("[DBG] updataAgentPos"," ", Direction," ",Agt," ", X, " ", Y);
+    /* ?stock::agt_Pos(Agt, X, Y);  */
+   // .print("[DBG] updataAgentPos"," ", Direction," ",Agt," ", X, " ", Y);
     if ( Direction == n  )
     {    
 
@@ -35,10 +35,23 @@
         +stock::agt_Pos(Agt, NewX, Y);
         
     }
-    ?stock::agt_Pos(Agt, X1, Y1); 
-    .print("[DBG] updataAgentPos new"," ", Direction," ",Agt," ", X1, " ", Y1);
-    -curret_token(X,pos);    
+   // ?stock::agt_Pos(Agt, X1, Y1); 
+    //.print("[DBG] updataAgentPos new"," ", Direction," ",Agt," ", X1, " ", Y1);
+    ?lock::curret_token(XC,pos); 
+    ?lock::token(XT);
+    if (XT > XC)
+    {
+        .print("Tocken update", XT ," ", XC);
+    }
+    
     .
 
 
 
++!updateAgentPos(Direction, Agt, X, Y)
+: true
+<- 
+    
+
+    .print("[INFO] Updated position", Agt, "(", CX, ",", CY, ") -> (", NewX, ",", NewY, ")");
+.

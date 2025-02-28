@@ -39,7 +39,7 @@
 : Type ==  mapEdge & Detail == n
 <-
     /* .print("22222222222222222222Type"," ",Type); */
-    NewY = Y - 1; 
+    NewY = (Y - 1); 
     ?stock::agt_Map_Edg(Agt,OldList);
     .union(OldList,[[X,NewY,Type,Detail]],U);
     -stock::agt_Map_Edg(Agt,_); 
@@ -53,7 +53,7 @@
 : Type ==  mapEdge & Detail == s
 <-
     /* .print("22222222222222222222Type"," ",Type); */
-    NewY = Y + 1; 
+    NewY = ( Y + 1); 
     ?stock::agt_Map_Edg(Agt,OldList);
     .union(OldList,[[X,NewY,Type,Detail]],U);
     -stock::agt_Map_Edg(Agt,_); 
@@ -66,7 +66,7 @@
 +!agtMemory(Agt,X,Y,Type,Detail)
 : Type ==  mapEdge & Detail == e
 <-
-    NewX = X + 1; 
+    NewX = (X + 1); 
     ?stock::agt_Map_Edg(Agt,OldList);
     .union(OldList,[[NewX,Y,Type,Detail]],U);
     -stock::agt_Map_Edg(Agt,_); 
@@ -77,7 +77,7 @@
 +!agtMemory(Agt,X,Y,Type,Detail)
 : Type ==  mapEdge & Detail == w
 <-
-    NewX = X + 1; 
+    NewX = (X - 1); 
     ?stock::agt_Map_Edg(Agt,OldList);
     .union(OldList,[[NewX,Y,Type,Detail]],U);
     -stock::agt_Map_Edg(Agt,_); 
