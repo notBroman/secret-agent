@@ -1,17 +1,14 @@
 +!initialAgent(Agt)
-: true
 <-
 
-+stock::agt_Map_Goa(Agt,0,[]);	
-+stock::agt_Map_Obs(Agt,0,[]);	
-+stock::agt_Map_Ent(Agt,0,[]);
-+stock::agt_Map_Blo(Agt,0,[]);
-+stock::agt_Map_Dis(Agt,0,[]);
+
++pos::agt_Pos(Agt, 0 ,0 ,0);	
 
 +team::roles(Agt,explorer);
 +team::gamers(Agt);
-+team::sendTo([]);
-+team::receiveFrom([]);
+
++stock::findEdge_NW;
++stock::findEdge_ES;
 
 .print("Init Agent Done: ", Agt);
 .
@@ -31,14 +28,14 @@
 !joinTeam[source(Sender)];
 .
 
-+!sortMembers(Tname)
++!sortMembers
 <-
     .wait(10);
     .my_name(Me);
     .setof(Members, team::gamers(Members), AllMembers);
     .nth(Index, AllMembers, Me);
     NewI = Index + (1);      
-    +team::members(Me,NewI,Tname,AllMembers);
-    .print("Team is ",Me, " ", NewI," ",Tname, " " , AllMembers);
+    +team::members(Me,NewI,AllMembers,(0),(0));
+    .print("Team is ",Me, " ", NewI," ", " " , AllMembers);
     .abolish(team::gamers(_));
     .

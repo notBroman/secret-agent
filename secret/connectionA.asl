@@ -16,85 +16,96 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     .my_name(Me);
     .print("hello massim world.");
     !init::initialAgent(Me);
+    .wait(100);
     .broadcast(achieve, init::joinTeam);
-    ?team(Tname)[source(Percept)];
-    !init::sortMembers(Tname);
+    
+    !init::sortMembers;
     .
 
 @atomic
 +actionID(S) : true <- 
 	/* .print("Determining my action"); */
-    +lock::token(S);
+    
     .my_name(Me);
     if (S ==  (0))
     {
-        +stock::agt_Pos(Me, (0) ,(0) ,(0));	
+        +pos::agt_Pos(Me, (0) ,(0) ,(0));	
 
     }
 
     
     if (lastAction(move))
     {
-        .wait(100);
-        ?stock::agt_Pos(Me, Sa,  CX, CY);
+        
+        ?pos::agt_Pos(Me, Sa,  CX, CY);
         ?lastActionParams([Direction]);
         if ( Direction == n  ) 
         {
             NewX = CX ;
-            NewY = (CY - 1);
-            Edg = [0,(CY - 1)];
+            NewY = (CY - 1);  
+
             
         }
         elif (Direction == s) 
         {
             NewX = CX;
             NewY = (CY + 1);
-            Edg = [0,(CY + 1)];
+
         } 
         elif (Direction == e)  
         {
             NewX = (CX + 1);
             NewY = CY; 
-            Edg = [(CX + 1),0];
+
         }
         elif (Direction == w) 
         {
             NewX = (CX - 1);
             NewY = CY;
-            Edg = [(CX - 1),0];
+  
         }
 
         if (lastActionResult(success))
         {
-            .print("lastActionResult success");
                         
-            +lock::updatePos_token(pos,S,Me);
+                    
+            -pos::agt_Pos(Me, _,  CX, CY); 
+            +pos::agt_Pos(Me, S,  NewX, NewY);
+            !per::seeSomeThing(Me,S,NewX,NewY);
             
-            -stock::agt_Pos(Me, _,  CX, CY); 
-            +stock::agt_Pos(Me, S,  NewX, NewY);
-            !per::location_obstacles(Me,S,NewX,NewY);
-            !per::location_goal(Me,S,NewX,NewY);
-            !per::location_dis(Me,S,NewX,NewY);
-            !per::location_blo(Me,S,NewX,NewY);
-            -lock::updatePos_token(pos,S,Me);
+            
             -lastAction(move);
             
         }    
         elif ( lastActionResult(failed_forbidden))
         {
-            .print("lastActionResult failed");
-            !per::location_edg(Me,[Direction,Edg]);
+            
+                
+            !per::location_edg(Me,Direction,NewX,NewY);
+            
+            
             -lastAction(move);
         }  
+        else
+        {
+            -lastAction(move);
+        }
+        
     }
-    !per::location_ent(Me,S,NewX,NewY);
-        
-        
-    !move_random(S);
-            
-    -lock::token(S);
-    .
+    
+    if (data::myent(Me,S,SLocalX,SLocalY,ET) & pos::agt_Pos(Me, S,  SenderX, SenderY) & team::members(Me,SenderId,AllMembers,MyDeltaX,MyDeltaY) )
+    {
+         
+         /* & team::members(Me,SenderId,AllMembers) & pos::agt_Pos(Agt, Step,  SenderX, SenderY) */
+        .print("Broadcast : bengin - >  Me ", Me ,"  Step :", S," SenderId: ", SenderId, " Sender X: ", SenderX, " SenderY ", SenderY, " SlocalX ", SLocalX, " slocalY ",SLocalY);
+        .broadcast(achieve,com::encounter_queue(S,SenderId,SenderX,SenderY,SLocalX,SLocalY)); 
 
+    }
+    
+         
+    !move_random(S);
+    
+    .
 /* Percept */
 +obstacle(X,Y)
 : lastAction(move)
@@ -102,7 +113,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     .my_name(Me);
     ?actionID(S);    
     
-    +stock::myobstacle(Me, S, X,Y);
+    +data::myobstacle(Me, S, X,Y);
 
     .
 
@@ -113,7 +124,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-  
     .my_name(Me);
     ?actionID(S);        
-    +stock::mygoal(Me,S,X,Y);
+    +data::mygoal(Me,S,X,Y);
     
     .
 
@@ -122,18 +133,18 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    +stock::mydispenser(Me,S,X,Y,Detail);    
+    +data::mydispenser(Me,S,X,Y,Detail);    
     .
 
 +thing(X,Y,entity,Detail)
 : true 
 <-
-    .my_name(Me);
-    ?actionID(S);
-    +stock::myent(Me,S,X,Y,Detail);
-    
-    .print("here is entities:",X,Y,Detail);
-    
+    if (X \== (0) & Y \== (0))
+    {
+        .my_name(Me);
+        ?actionID(S);
+        +data::myent(Me,S,X,Y,Detail);    
+    }
     .
 
 +thing(X,Y,block,Detail)
@@ -142,7 +153,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
     .my_name(Me);
     ?actionID(S);
     
-    +stock::myblock(Me,S,X,Y,Detail);    
+    +data::myblock(Me,S,X,Y,Detail);    
     .
 
 +!move_random(S)
