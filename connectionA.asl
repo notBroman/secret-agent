@@ -34,6 +34,7 @@ block_type(BlockDir, BlockType) :-
 /* Initial beliefs */
 
 me(0,0).
+loseStreak(0).
 
 /* Initial goals */
 
@@ -55,19 +56,20 @@ me(0,0).
 
 //deliberate on what to do
 // when to do exploration
++!think : loseStreak(X) & X > 5 <- !thisIsNotWorking.
 +!think : lastActionResult(failed_path) & lastAction(move) & me(X,Y)
 	<- +destination(X+1,Y+1).
 +!think : not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_) 
-	<- !move_random.
+	<- !explore.
 +!think : attached_block(_,_) & not my_goal(X,Y) 
-	<- !move_random.
+	<- !explore.
 // get to the destination
 +!think : destination(_,_,_) 
 	<- .print("Go to destination"); !reach_destination.
 +!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b0(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser", D); +destination(X,Y,destination); !reach_destination.
+	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
 +!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b1(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser", D); +destination(X,Y,destination); !reach_destination.
+	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
 +!think : attached_block(_,_) & my_goal(X,Y) & not me(X,Y) <- +destination(X,Y,g); !reach_destination.
 // what to do when at dispenser
 +!think : adjacent_thing(ListDispenser,dispenser) & not .empty(ListDispenser) & 
@@ -86,17 +88,18 @@ me(0,0).
 // fail safe
 +!think : true <- .print("(╭ರ_•́)").
 
++!explore : true <- !move_random.
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <-	move(Dir).
 
 // terminal conditions
-+!reach_destination : me(Mx,My) & destination(X,Y,T) & T == destination  & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
-+!reach_destination : me(X,Y) & destination(X,Y,T) & not (T == destination) <- .print("We have arrived"); -destination(X,Y,T).
++!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
++!reach_destination : me(X,Y) & destination(X,Y,T) & T == g <- .print("We have arrived"); -destination(X,Y,T).
 // movement logic
-+!reach_destination : destination(X,Y,_) & me(Mx,My) & not (Y == My) & close_in([n,s],Y-My,DIR) <-
-	   move(DIR).
-+!reach_destination : destination(X,Y,_) & me(Mx,My) & not (X == Mx) & close_in([w,e],X-Mx,DIR) <-
-	   move(DIR).
++!reach_destination : destination(X,Y,_) & me(Mx,My) & not (Y == My) & close_in([n,s],Y-My,DIR) 
+	<- move(DIR).
++!reach_destination : destination(X,Y,_) & me(Mx,My) & not (X == Mx) & close_in([w,e],X-Mx,DIR) 
+	<- move(DIR).
 +!reach_destination : me(Mx,My) & (my_b0(X,Y) | my_b1(X,Y))<- !move_random.
 +!reach_destination : true <- .print("DBG MSG"); skip.
 
@@ -114,16 +117,17 @@ me(0,0).
 +!requestBlock(Dir) : true <- request(Dir).
 
 // find all tasks with just one block of given type
-+!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) & not .empty(T) &
-	.nth(0,T,t(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
-	<- .print(PickedTask); +my_task(TaskName,s).
++!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)])&not claimedTask(TName),T) 
+	& not .empty(T) & .nth(0,T,t(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
+	<- .print(PickedTask); .broadcast(tell, claimedTask(TaskName)); +my_task(TaskName,s).
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) <- .print("why:", T).
 
 +!submitTask : my_task(TaskName,_) <- submit(TaskName).
-+!submitTask : not my_task(TaskName,_) <- !pickTask(BType,TaskName,Orientation).
++!submitTask : not my_task(TaskName,_) & attached_block(BType,_) <- !pickTask(BType,TaskName,Orientation).
++!submitTask : true <- .print("There is no block, how did we get here?").
 
 @update[atomic]
-+!update : true <- !updateMyPos; !updateMyAttached.
++!update : true <- !updateMyPos; !updateMyAttached; !updateMyTask.
 
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
 	<- -me(X,Y); +me(NX,NY).
@@ -136,3 +140,8 @@ me(0,0).
 +!updateMyAttached : lastActionParams(ActionParams) & lastAction(A) & lastActionResult(R) <- .print(A, ": ", ActionParams, "<-", R).
 +!updateMyAttached : true <- true.
 
++!updateMyTask : my_task(_,_) & lastAction(submit) & lastActionResult(success) <- -my_task(_,_).
++!updateMyTask : true <- true.
+
++!countFail : not lastActionResult(success) & loseStreak(Num) <- -loseStreak(Num); +loseStreak(Num+1).
++!countFail : lastActionResult(success) <- -loseStreak(_); +loseStreak(0).
