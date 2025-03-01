@@ -115,11 +115,11 @@ me(0,0).
 
 // find all tasks with just one block of given type
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) & not .empty(T) &
-	.nth(0,T,pickedTask(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
+	.nth(0,T,t(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
 	<- .print(PickedTask); +my_task(TaskName,s).
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) <- .print("why:", T).
 
-+!submitTask : my_task(TaskName,_) <- skip.
++!submitTask : my_task(TaskName,_) <- submit(TaskName).
 +!submitTask : not my_task(TaskName,_) <- !pickTask(BType,TaskName,Orientation).
 
 @update[atomic]
