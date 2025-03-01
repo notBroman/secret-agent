@@ -13,15 +13,13 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 
 +!start : true 
 <- 
-.my_name(Me);
-.print("hello massim world.");
-!init::initialAgent(Me);
-.broadcast(achieve, init::joinTeam);
-?team(Tname)[source(Percept)];
-!init::sortMembers(Tname);
-
-
-.
+    .my_name(Me);
+    .print("hello massim world.");
+    !init::initialAgent(Me);
+    .broadcast(achieve, init::joinTeam);
+    ?team(Tname)[source(Percept)];
+    !init::sortMembers(Tname);
+    .
 
 @atomic
 +actionID(S) : true <- 
@@ -74,7 +72,6 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
             
             -stock::agt_Pos(Me, _,  CX, CY); 
             +stock::agt_Pos(Me, S,  NewX, NewY);
-
             !per::location_obstacles(Me,S,NewX,NewY);
             !per::location_goal(Me,S,NewX,NewY);
             !per::location_dis(Me,S,NewX,NewY);
@@ -90,10 +87,10 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
             -lastAction(move);
         }  
     }
-    
+    !per::location_ent(Me,S,NewX,NewY);
         
         
-    //!move_random(S);
+    !move_random(S);
             
     -lock::token(S);
     .
@@ -104,7 +101,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-  
     .my_name(Me);
     ?actionID(S);    
-    -stock::myobstacle(Me, _, _,_);
+    
     +stock::myobstacle(Me, S, X,Y);
 
     .
@@ -115,8 +112,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 : lastAction(move) 
 <-  
     .my_name(Me);
-    ?actionID(S);    
-    -stock::mygoal(Me,_,_,_);
+    ?actionID(S);        
     +stock::mygoal(Me,S,X,Y);
     
     .
@@ -126,7 +122,6 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    -stock::mydispenser(Me,_,_,_,_);
     +stock::mydispenser(Me,S,X,Y,Detail);    
     .
 
@@ -135,8 +130,8 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    -stock::myent(Me,S,Detail);
-    +stock::myent(Me,S,Detail);
+    +stock::myent(Me,S,X,Y,Detail);
+    
     .print("here is entities:",X,Y,Detail);
     
     .
@@ -146,7 +141,7 @@ random_dir(DirList,RandomNumber,Dir) :- (RandomNumber <= 0.25 & .nth(0,DirList,D
 <-
     .my_name(Me);
     ?actionID(S);
-    -stock::myblock(Me,_,_,_,_);
+    
     +stock::myblock(Me,S,X,Y,Detail);    
     .
 

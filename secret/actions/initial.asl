@@ -10,6 +10,8 @@
 
 +team::roles(Agt,explorer);
 +team::gamers(Agt);
++team::sendTo([]);
++team::receiveFrom([]);
 
 .print("Init Agent Done: ", Agt);
 .
@@ -27,7 +29,6 @@
 : joining
 <-
 !joinTeam[source(Sender)];
-
 .
 
 +!sortMembers(Tname)
