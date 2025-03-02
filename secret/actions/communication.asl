@@ -1,11 +1,5 @@
 
-
-
-+!delta(Leader,Teammate,Delta)
-: true
-<-
-    Delta = Leader - Teammate;
-    .
+delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 
 +!check_encounter(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY)[source(Sender)]
 :  not iden::sameSetp & not iden::sameSetp & not iden::identifying(_) & not lock::mapMerging(_)
@@ -78,8 +72,8 @@
         }
         elif (SenderId > MyID)
         {            
-            !delta(SenderX,MyPosX,DeltaX);
-            !delta(SenderY,MyPosY,DeltaY);            
+            ?delta(SenderX,MyPosX,DeltaX);
+            ?delta(SenderY,MyPosY,DeltaY);            
             // Add it to receiveFrom List
             !updateMessageList(Sender);
             .send(Sender,achieve, com::comfirmMailList);

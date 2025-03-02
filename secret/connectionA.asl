@@ -44,7 +44,9 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
         if (lastActionResult(success))
         {        
             -pos::agt_Pos(Me, _,  CX, CY); 
+            
             +pos::agt_Pos(Me, S,  NewX, NewY);
+            .wait(1);
             -lastAction(move);
             
         }    
@@ -67,14 +69,7 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
         +pos::agt_Pos(Me, S,  CX, CY);
     }
     
-/*     if (data::myent(Me,S,SLocalX,SLocalY) & pos::agt_Pos(Me, S,  SenderX, SenderY) & team::members(Me,SenderId,AllMembers,MyDeltaX,MyDeltaY) )
-    {
-         
-     
-        .print("Broadcast : bengin - >  Me ", Me ,"  Step :", S," SenderId: ", SenderId, " Sender X: ", SenderX, " SenderY ", SenderY, " SlocalX ", SLocalX, " slocalY ",SLocalY);
-        
 
-    } */
     
          
     !move_random;
