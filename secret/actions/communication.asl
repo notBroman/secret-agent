@@ -1,15 +1,14 @@
 
 
 
-+!delta(Leader,Local,Teammate,Delta,New)
++!delta(Leader,Teammate,Delta)
 : true
 <-
-    New = (Leader - Teammate) + Local;
     Delta = Leader - Teammate;
     .
 
 +!check_encounter(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY)[source(Sender)]
-:  not iden::sameSetp | not iden::sameSetp 
+:  not iden::sameSetp & not iden::sameSetp & not iden::identifying(_) & not lock::mapMerging(_)
 <- 
     +iden::identifying(check);
     .wait(1);
@@ -27,8 +26,8 @@
         +iden::newMember;
     }
     
-    .wait({+data::myent(_,_,_,_,_)});
-    if (data::myent(MyStep,_,_,_,_))
+    .wait({+data::myent(_,_,_,_,_,_,_)});
+    if (data::myent(MyStep,_,_,_,_,_,_))
     {
        
         if (MyStep = Step)
@@ -60,13 +59,13 @@
 :  iden::sameSetp & iden::newMember & not lock::mapMerging(_)  & not iden::identifying(_) 
 <- 
     +iden::identifying(encounter);
-
-    ?data::myent(Mystep,MLocalX,MLocalY,MyPosX,MyPosY);
+    .wait(pos::agt_Pos(_, Step,  _, _));
+    ?data::myent(Step,MLocalX,MLocalY,MyPosX,MyPosY,ObjX,ObjY);
     ?team::members(Agt,MyID,AllAgtmbers,MyDeltaX,MyDeltaY);
     .my_name(Agt);
     //.print("Broadcast1 : receive -> Agt ", Agt ,"  Step :", Step," SenderI: ", SenderId, " Sender X: ", SenderX, " SenderY ", SenderY, " SlocalX ", SLocalX, " slocalY ",SLocalY);
     //.print("MY Local X ", MLocalX, " My local Y: ", MLocalY , " My id ",MyID);
-
+    
     if ( SLocalX == MLocalX | SLocalX == (-MLocalX) | SLocalY == MLocalY | SLocalY == (-MLocalY) )
     {
         
@@ -75,46 +74,65 @@
 
             // Calculate offset of coordinate
             !updateMessageList(Sender);
-
+            -iden::identifying(encounter);
         }
         elif (SenderId > MyID)
         {            
-            !delta(SenderX,SLocalX,MyPosX,DeltaX,NewPosX);
-            !delta(SenderY,SLocalY,MyPosY,DeltaY,NewPosY);            
+            !delta(SenderX,MyPosX,DeltaX);
+            !delta(SenderY,MyPosY,DeltaY);            
             // Add it to receiveFrom List
             !updateMessageList(Sender);
-            
+            .send(Sender,achieve, com::comfirmMailList);
             !merging_prepare( DeltaX, DeltaY,SenderId);
-
+            .print("Begin merging, sender is ", Sender );
         }                    
         
     } 
-    -data::myent(_,_,_,_,_);
+    -data::myent(_,_,_,_,_,_,_);
     -iden::newMember;
     -iden::sameSetp;
-    -iden::identifying(encounter);
+    
     .
 +!encounter_queue(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY,Sender)
 <-
     !skip;
     .
 
-+!updateMessageList(ContactInfo)
-: not team::emailGroup
-<-
-    
-    +team::emailGroup([ContactInfo]);
-    
-.
+
 
 +!updateMessageList(ContactInfo)
 <-
     
     ?team::emailGroup(Slist);
-    .union(ContactInfo,Slist,NewSlist);
+    .union([ContactInfo],Slist,NewSlist);
     +team::emailGroup(NewSlist);
     -team::emailGroup(Slist);
     
+    .
+
++!comfirmMailList[source(Sender)]
+<-
+    .my_name(Agt);
+     if (team::emailGroup(E))
+    {
+        if ( not .member(Sender,E))
+            {
+                .print("I ", Agt, "Add.", Sender, " to mail list");
+                !updateMessageList(Sender);
+
+            }
+        else
+        {
+            .print("I ", Agt, "already got you.", Sender);
+        }
+    }
+    else
+    {
+        .print("I ", Agt, "Add.", Sender, " to mail list");
+        !updateMessageList(Sender);
+        
+    }
+
     .
 
 +!broadcastMessage(Agents, DeltaX, DeltaY, NewId) 
@@ -131,7 +149,7 @@
     
 
     +lock::mapMerging(goa);
-    .print("updata Map Goal"," Offset is ", DeltaX," and ",DeltaY, " Original GoaList: ", GoaList);
+    .print("updata Map Goal Offset is ", DeltaX," and ",DeltaY, ", The Original GoaList: ", GoaList);
     .setof([NX,NY], (.member([AX,AY], GoaList)& NX = AX + DeltaX & NY= AY + DeltaY), NewGoaList);
     .print("After Merging GoaList:", NewGoaList);
     //!update_list(GoaList, DeltaX, DeltaY, NewGoaList);
@@ -146,7 +164,7 @@
 : .my_name(Agt) & stock::agt_Map_Obs(ObsList)
 <- 
     +lock::mapMerging(obs);
-    .print("updata Map Obs"," Offset is ", DeltaX," and ",DeltaY, "Original ObsList:", ObsList);
+    .print("updata Map Obs"," Offset is ", DeltaX," and ",DeltaY, ", The Original ObsList:", ObsList);
     .setof([NX,NY], (.member([AX,AY], ObsList)& NX = AX + DeltaX & NY= AY + DeltaY), NewObsList);
     .print("After Merging NewObsList:", NewObsList);
     //!update_list(ObsList, DeltaX, DeltaY, NewObsList); 
@@ -161,7 +179,7 @@
 <-  
     +lock::mapMerging(dis);
     .print("updata Map Dispenser");
-    .print("updata Map Dis"," Offset is ", DeltaX," and ",DeltaY, "Original DisList:", DisList);
+    .print("updata Map Dis"," Offset is ", DeltaX," and ",DeltaY, ", Original DisList:", DisList);
     .setof([NX,NY,Type], (.member([AX,AY,Type], DisList)& NX = AX + DeltaX & NY= AY + DeltaY), NewDisList);
     .print("After Merging NewDisList:", NewDisList);
     //!update_list(DisList, DeltaX, DeltaY, NewDisList);
@@ -175,7 +193,7 @@
 <-  
     +lock::mapMerging(blo);
     .print("updata Map Block");
-    .print("updata Map Block"," Offset is ", DeltaX," and ",DeltaY, "Original BloList:", BloList);
+    .print("updata Map Block"," Offset is ", DeltaX," and ",DeltaY, ", Original BloList:", BloList);
     .setof([NX,NY], (.member([AX,AY], BloList)& NX = AX + DeltaX & NY= AY + DeltaY), NewBloList);
     .print("After Merging NewDisList:", NewDisList);
     //!update_list(DisList, DeltaX, DeltaY, NewDisList);
@@ -187,6 +205,7 @@
 +!merging_prepare( DeltaX, DeltaY,SenderId)
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID < SenderId & pos::agt_Pos(_, Step,MyPosX,MyPosY)
 <-
+    -iden::identifying(encounter);
     +lock::mapMerging(pre);
     // Infected to the same level as the Leader
     .my_name(Agt);
@@ -197,7 +216,7 @@
     .print("old aix is ", MyPosX, " ", MyPosY, " New is ", NewPosX, " and ", NewPosY, "Deltaa is ", DeltaX , " ", DeltaY, "sendid is ",SenderId);
     -pos::agt_Pos(_,_,_,_);
     +pos::agt_Pos(Agt,Step ,NewPosX ,NewPosY);
-
+    
     !merging_map(DeltaX, DeltaY);
     -lock::mapMerging(pre);
 /*     if(team::emailGroup(Slist))
@@ -208,7 +227,7 @@
     
     .
 
-+!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
+/* +!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID > SenderId
 <-
 
@@ -216,21 +235,28 @@
     
     .send(Sender, achieve, com::merging_prepare(MyDeltaX, MyDeltaY,MyID));
     
-    .
+    . */
 
 +!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID == SenderId
 <-
     .print("We are the same. Do nothing  ", MyID);
     .
++!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
+<-
+    !merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
+.
 // Things Database is empty
 +!merging_map( DeltaX, DeltaY)
 : not stock::agt_Map_Dis(Agt, Step, DisList) & not stock::agt_Map_Obs(ObsList) & not stock::agt_Map_Goa(GoaList)
 <-
-!skip    .
+    !skip   
+     .
 
 
 +!skip : true . 
+
+
 
 +!merging_map(DeltaX,DeltaY)
 : stock::agt_Map_Edg_Y_N(Y)

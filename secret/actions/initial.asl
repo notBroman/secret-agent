@@ -1,15 +1,21 @@
 +!initialAgent(Agt)
 <-
++stock::agt_Map_Blo([]);
++stock::agt_Map_Dis([]);
++stock::agt_Map_Goa([]);
++stock::agt_Map_Obs([]);
 
 
 +pos::agt_Pos(Agt, 0 ,0 ,0);	
 
 +team::roles(Agt,explorer);
 +team::gamers(Agt);
++team::location(Agt,0,0);
++team::emailGroup([]);
 
 +stock::findEdge_NW;
 +stock::findEdge_ES;
-
+/* +data::myent(0,0,0,0,0); */
 .print("Init Agent Done: ", Agt);
 .
 

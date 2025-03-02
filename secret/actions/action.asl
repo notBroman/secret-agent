@@ -1,12 +1,7 @@
 
-+!move(Direction,S)
++!move(Direction)
 <- 
-.my_name(Agt);
-move(Direction);
-+lastAction(move);
+    move(Direction);
+    +lastAction(move);
 .
-/* +!move(Direction,S)
-: lock::move(_)
-<-
-!move(Direction,S);
-. */
++!move(Direction) : true.
