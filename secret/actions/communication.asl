@@ -93,17 +93,13 @@
     
     .
 
++!broadcastMessage(Agents, DeltaX, DeltaY, NewId) 
+<- 
+    for (.member(R, Agents)) {
+        .send(R, achieve, com::merging_prepare(DeltaX, DeltaY, NewId));
+    }
+        .
 
-
-+!broadcastMessage([],DeltaX,DeltaY,NewId) <- true.
-
-+!broadcastMessage([R | Rest], DeltaX, DeltaY,NewId) 
-    <- 
-        .print("boradcstMessage : sent to ", R);
-        .send(R, achieve, com::merging_prepare(DeltaX, DeltaY,NewId));
-        .wait(5);
-        !broadcastMessage(Rest, DeltaX, DeltaY,NewId);
-   .
 // Mergering : goal
 +!merging_map( DeltaX, DeltaY)
 : .my_name(Agt) & stock::agt_Map_Goa(Agt, Step, GoaList)
