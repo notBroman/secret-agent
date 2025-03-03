@@ -21,7 +21,6 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
     .my_name(Me);
     .print("hello massim world.");
     !init::initialAgent(Me);
-    .wait(100);
     .broadcast(achieve, init::joinTeam);
     
     !init::sortMembers;
@@ -30,11 +29,21 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
 @atomic
 +actionID(S) : true <- 
 	/* .print("Determining my action"); */
-    
     .my_name(Me);
-    
-    .wait(pos::agt_Pos(Agt, _,  _, _)); 
-    ?pos::agt_Pos(Me, _,  CX, CY);
+    .print("Begin is ", (S));
+    if (pos::agt_Pos(Me, (S-1),  CX, CY))
+    {
+                        
+    }
+    else
+    {
+        CX = (0);
+        CY = (0);
+        +pos::agt_Pos(Me, (0),  CX, CY);
+    }
+
+    .wait(lock::allow_update_location);
+    - lock::allow_update_location;
     if (lastAction(move))
     {
         
@@ -42,34 +51,39 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
         ?agtCoordinate(Direction,CX,CY,NewX,NewY);
 
         if (lastActionResult(success))
-        {        
-            -pos::agt_Pos(Me, _,  CX, CY); 
-            
+        {   
+            -pos::agt_Pos(Me, S-1,  _, _);             
             +pos::agt_Pos(Me, S,  NewX, NewY);
             .wait(1);
+            
             -lastAction(move);
             
         }    
         elif ( lastActionResult(failed_forbidden))
         {
-                            
+            -pos::agt_Pos(Me, S-1,  _, _); 
+            +pos::agt_Pos(Me, S,  CX, CY);                
             !per::location_edg(Me,Direction,NewX,NewY);                    
             -lastAction(move);
+            
         }  
         else
         {
+            -pos::agt_Pos(Me, S-1,  _, _); 
+            +pos::agt_Pos(Me, S,  CX, CY);
             -lastAction(move);
+            
         }
         
     } 
     else
     {
 
-        -pos::agt_Pos(Me, _,  CX, CY); 
+        -pos::agt_Pos(Me, S-1,  _, _); 
         +pos::agt_Pos(Me, S,  CX, CY);
+        .wait(1);
     }
-    
-
+    +lock::allow_update_location;
     
          
     !move_random;

@@ -197,8 +197,9 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     .
 
 +!merging_prepare( DeltaX, DeltaY,SenderId)
-: team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID < SenderId & pos::agt_Pos(_, Step,MyPosX,MyPosY)
+: team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID < SenderId & pos::agt_Pos(_, Step,MyPosX,MyPosY) & lock::allow_update_location
 <-
+    -lock::allow_update_location;
     -iden::identifying(encounter);
     +lock::mapMerging(pre);
     // Infected to the same level as the Leader
@@ -213,6 +214,7 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     
     !merging_map(DeltaX, DeltaY);
     -lock::mapMerging(pre);
+    +lock::allow_update_location;
 /*     if(team::emailGroup(Slist))
     {
         !broadcastMessage(Slist,DeltaX,DeltaY, SenderId);
@@ -221,6 +223,11 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     
     .
 
++!merging_prepare( DeltaX, DeltaY,SenderId)
+: not lock::allow_update_location
+<-
+    !merging_prepare( DeltaX, DeltaY,SenderId);
+.
 /* +!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID > SenderId
 <-
