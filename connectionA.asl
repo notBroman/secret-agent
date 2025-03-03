@@ -101,7 +101,7 @@ loseStreak(0).
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
 +!reach_destination : me(X,Y) & destination(X,Y,T) & T == g <- .print("We have arrived"); -destination(X,Y,T).
 // movement logic
-+!reach_destination : destination(X,Y,_) & me(Mx,My) & not (Y == My) & close_in([n,s],Y-My,DIR) 
++!reach_destination : destination(X,Y,_) & lastActionResult(success) & me(Mx,My) & not (Y == My) & close_in([n,s],Y-My,DIR) 
 	<- move(DIR).
 +!reach_destination : destination(X,Y,_) & me(Mx,My) & not (X == Mx) & close_in([w,e],X-Mx,DIR) 
 	<- move(DIR).
