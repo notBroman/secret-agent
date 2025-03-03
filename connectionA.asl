@@ -81,8 +81,6 @@ loseStreak(0).
 // submission logic
 +!think : attached_block(CardinalDir,BType) & not my_task(_,_) 
 	<- !pickTask(BType,TaskName,Orientation); !submitTask.
-+!think : my_task(_,Orientation) & lastActionResult(failed) & lastAction(submit)
-	<- rotate(cw).
 +!think : my_task(_,_) 
 	<- !submitTask.
 // fail safe
@@ -122,7 +120,9 @@ loseStreak(0).
 	<- .print(PickedTask); .broadcast(tell, claimedTask(TaskName)); +my_task(TaskName,s).
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) <- .print("why:", T).
 
-+!submitTask : my_task(TaskName,_) <- submit(TaskName).
++!submitTask : my_task(TaskName,TOrientation) & attached_block(BType,TOrientation)<- submit(TaskName).
++!submitTask : my_task(TaskName,TOrientation) & attached_block(BType,BOrientation) & TOrientation == BOrientation 
+	<- ; rotate(cc).
 +!submitTask : not my_task(TaskName,_) & attached_block(BType,_) <- !pickTask(BType,TaskName,Orientation).
 +!submitTask : true <- .print("There is no block, how did we get here?").
 
