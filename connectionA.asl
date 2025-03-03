@@ -88,9 +88,63 @@ loseStreak(0).
 // fail safe
 +!think : true <- .print("(╭ರ_•́)").
 
-+!explore : true <- !move_random.
-+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
-<-	move(Dir).
+//+!explore : true <- !move_random.
+//+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
+//<-	move(Dir).
+
+@explore[atomic] 	
++!explore: explore(Dir) & me(X,Y) <-
+	//check if the direction is sill valid
+	if(Dir = n &  (boundary(Y-1, n) |  thing(X,Y-1,obstacle,_))){
+		-explore(_);
+		!explore;
+	}elif(Dir = s & (boundary(Y+1, s) | thing(X,Y+1,obstacle,_))){
+		-explore(_);
+		!setexplore;
+	}elif(Dir = e & (boundary(X+1, e) | thing(X+1,Y,obstacle,_))){
+		-explore(_);
+		!setexplore;
+	}elif(Dir = w & (boundary(X-1, w) | thing(X-1,Y,obstacle,_))){
+		-explore(_);
+		!setexplore;
+	}.
+
++!setexplore: .random(N) & random_dir([n,s,e,w],N,Dir) & me(X,Y) <-
+
+	-explore(_);
+
+	if(Dir = n & not (boundary(Y-1, n)) & not (thing(X,Y-1,obstacle,_))) {
+		+explore(n);
+	}elif(Dir = s & not (boundary(Y+1, s)) & not (thing(X,Y+1,obstacle,_))) {
+		+explore(s);
+	}elif(Dir = e & not (boundary(X+1, e)) & not (thing(X+1,Y,obstacle,_))) {
+		+explore(e);
+	}elif(Dir = w & not (boundary(X-1, w)) & not (thing(X-1,Y,obstacle,_))) {
+		+explore(w);
+	}
+	else{
+		!setexplore; 	
+	}.
+	
+
++!flipexplore: explore(Dir) <-
+	if(Dir = n){
+		-explore(_);
+		+explore(e);
+	};
+	if(Dir = s){
+		-explore(_);
+		+explore(w);
+	};
+	if(Dir = e){
+		-explore(_);
+		+explore(s);
+	};
+	if(Dir = w){
+		-explore(_);
+		+explore(n);
+	}. 
+
 
 // terminal conditions
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
