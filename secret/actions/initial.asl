@@ -1,18 +1,18 @@
 +!initialAgent(Agt)
 <-
-+stock::agt_Map_Blo([]);
-+stock::agt_Map_Dis([]);
-+stock::agt_Map_Goa([]);
-+stock::agt_Map_Obs([]);
++stock::agt_Map_Blo([ ]);
++stock::agt_Map_Dis([ ]);
++stock::agt_Map_Goa([ ]);
++stock::agt_Map_Obs([ ]);
 
 +team::roles(Agt,explorer);
 +team::gamers(Agt);
-+team::location(Agt,0,0);
-+team::emailGroup([]);
++team::emailGroup([ ]);
 
 +stock::findEdge_NW;
 +stock::findEdge_ES;
 +lock::allow_update_location;
+
 /* +data::myent(0,0,0,0,0); */
 
 .
@@ -40,6 +40,9 @@
     .nth(Index, AllMembers, Me);
     NewI = Index + (1);      
     +team::members(Me,NewI,AllMembers,(0),(0));
+/*     for (.member(R, AllMembers)) {
+        +iden::sender(R,(0),(0));
+    } */
     .print("Team is ",Me, " ", NewI," ", " " , AllMembers);
     .abolish(team::gamers(_));
     .

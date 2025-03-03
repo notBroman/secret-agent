@@ -24,13 +24,14 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
     .broadcast(achieve, init::joinTeam);
     
     !init::sortMembers;
+    
     .
 
 @atomic
 +actionID(S) : true <- 
 	/* .print("Determining my action"); */
     .my_name(Me);
-    .print("Begin is ", (S));
+   //.print("Begin is ", (S));
     if (pos::agt_Pos(Me, (S-1),  CX, CY))
     {
                         
@@ -92,62 +93,69 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
 /* Percept */
     
 
-+obstacle(X,Y)
-: lastAction(move)   & actionID(S)
++obstacle(ObsX,ObsY)
+: lastAction(move)   & actionID(S) 
 <-  
-    .wait(pos::agt_Pos(_, S,  _, _));
-    ?pos::agt_Pos(_ ,S,  Lx, Ly);    
+    .wait({+pos::agt_Pos(_, S,  _, _)});
+    ?pos::agt_Pos(_ ,S,  OX, OY);    
     ?stock::agt_Map_Obs(OldL);
+    NewOX = (ObsX + OX);
+    NewOY = (ObsY + OY);
 
-    .union([[(Lx + X),(Ly + Y)]],OldL,ObsList);    
-    .wait(1);
-
+    
+    .union([[NewOX,NewOY]],OldL,ObsList);    
     -stock::agt_Map_Obs(_);
     +stock::agt_Map_Obs(ObsList);    
-    
 
     .
 
 
-+goal(X,Y)
-: lastAction(move) & actionID(S) & not lock::mapMerging(goa)
++goal(GoaX,GoaY)
+: lastAction(move) & actionID(S)  
 <-  
-    .wait(pos::agt_Pos(_, S,  _, _));    
-    ?pos::agt_Pos(_ ,S,  Lx, Ly);
-    ?stock::agt_Map_Goa(GoaL);
-
-    .union([[(Lx + X),(Ly + Y)]],GoaL,GoaList);
-    .wait(1);
+    .wait({+pos::agt_Pos(_, S,  _, _)});
+    ?pos::agt_Pos(_ ,S,  GX, GY);    
+    ?stock::agt_Map_Goa(Ogl);
+    
+    NewGX = (GoaX + GX);
+    NewGY = (GoaY + GY);
+    
+    .union([[NewGX,NewGY]],Ogl,NewGoaL);    
 
     -stock::agt_Map_Goa(_);
-    +stock::agt_Map_Goa(GoaList);    
+    +stock::agt_Map_Goa(NewGoaL);    
+ 
+
     .
 
-+thing(X,Y,dispenser,Detail)
-:  lastAction(move) & actionID(S) & not lock::mapMerging(dis)
- 
-<-
-    .wait(pos::agt_Pos(_, S,  _, _));    
-    ?pos::agt_Pos(_ ,S,   Lx, Ly);
-    ?stock::agt_Map_Dis(DisL);
++thing(DisX,DisY,dispenser,Detail)
+:  lastAction(move) & actionID(S)  
+<-  
+    .wait({+pos::agt_Pos(_, S, _, _)});
+    ?stock::agt_Map_Dis(DisL);    
+    ?pos::agt_Pos(Agt ,S, DX, DY);
     
-    .union([[(Lx + X),(Ly + Y)]],DisL,DisList);    
-    .wait(1);    
+     NewDX = (DisX + DX);
+     NewDY = (DisY + DY);
+    
+    .union([[NewDX,NewDY,Detail]],DisL,DisList);    
+  
     -stock::agt_Map_Dis(_);
     +stock::agt_Map_Dis(DisList);
     . 
 
 
-+thing(X,Y,block,Detail)
++thing(BloX,BloY,block,Detail)
 : lastAction(move) & actionID(S) & not lock::mapMerging(blo)
 <-
-    .wait(pos::agt_Pos(_, S,  _, _));    
-    ?pos::agt_Pos(_ ,S,  Lx, Ly);
+    .wait({+pos::agt_Pos(_, S,  _, _)});
+    ?pos::agt_Pos(_ ,S,  Bx, By);
     ?stock::agt_Map_Blo(BloL);
-
+    NewBX = (BloX + BX);
+     NewBY = (BloY + BY);
     
-    .union([[(Lx + X),(Ly + Y)]],BloL,BloList);
-    .wait(1);
+    .union([[NewBX,NewBY]],BloL,BloList);
+
 
     -stock::agt_Map_Blo(_);
     +stock::agt_Map_Blo(BloList);
@@ -157,22 +165,23 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
 
 
 
- +thing(X,Y,entity,Detail)
-: actionID(S) & team(T) & lastAction(move) & not lock::mapMerging(ent)
+ +thing(SLocalX,SLocalY,entity,Detail)
+: actionID(Step) & team(T)  & not lock::mapMerging(ent) & team::members(Me,SenderId,AllMembers,DeltaX,DeltaY)
 <-
     
-    if (X \== (0) & Y \== (0) & T == Detail)
+    if (SLocalX \== (0) & SlocalY \== (0) & T == Detail)
     {
         .my_name(Me);
-        .wait(pos::agt_Pos(_, S,  _, _));    
-        .wait(team::members(Me,_,_,_,_));
-        ?pos::agt_Pos(Me, S,  MyX, MyY);
-        ?team::members(Me,SenderId,_,_,_);
-        ObjX = (MyX + X );
-        ObjY = (MyY + Y); 
-        .broadcast(achieve,com::check_encounter(S,SenderId,ObjX,ObjX,X,Y));         
+        .wait({+pos::agt_Pos(_, Step,  _, _)});    
+        ?pos::agt_Pos(Me, Step,  SenderOwnX, SenderOwnY);
+        
+        SenderX = (SenderOwnX + SLocalX );
+        SenderY = (SenderOwnY + SLocalX); 
+        
+        //.print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
+        .broadcast(achieve,com::check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY));         
         -data::myent(_,_,_,_,_,_,_);
-        +data::myent(S,X,Y,MyX, MyY,ObjX,ObjY);
+        +data::myent(Step,SLocalX,SLocalY,SenderOwnX, SenderOwnY,SenderX,SenderY);
 
     }
     .

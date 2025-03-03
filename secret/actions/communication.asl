@@ -1,74 +1,69 @@
 
 delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 
-+!check_encounter(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY)[source(Sender)]
-:  not iden::sameSetp & not iden::sameSetp & not iden::identifying(_) & not lock::mapMerging(_)
++!check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY)[source(Sender)]
+:   not lock::mapMerging(_)
 <- 
-    +iden::identifying(check);
-    .wait(1);
-    if (team::emailGroup(E))
-    {
-        if ( not .member(Sender,E))
-            {
-            
-            +iden::newMember;
-
-            }
-    }
-    else
-    {
-        +iden::newMember;
-    }
     
     .wait({+data::myent(_,_,_,_,_,_,_)});
     if (data::myent(MyStep,_,_,_,_,_,_))
     {
+        ?data::myent(AA,_,_,_,_,_,_);
        
-        if (MyStep = Step)
+        if (AA = Step)
         {
-            +iden::sameSetp;
+            //.print("Mystep ", AA,  "Step ", Step);
+            !encounter_queue(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender);
+           
         }
     }
 
-    -iden::identifying(check);
+   
+    //.print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
 
-    !encounter_queue(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY,Sender);
     .
 
-+!check_encounter(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY)[source(Sender)] 
-: lock::mapMerging(_)  | iden::identifying(_) 
++!check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY)[source(Sender)] 
+: lock::mapMerging(_) 
 <-
     -iden::newMember;
     -iden::sameSetp;
 .
 
-+!check_encounter(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY)[source(Sender)] 
++!check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY)[source(Sender)] 
+: team::emailGroup(Mem) & .member(Sender,Mem)
+<-
+    -iden::newMember;
+    -iden::sameSetp;
+.
+
++!check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY)[source(Sender)] 
 <-
     -iden::newMember;
     -iden::sameSetp;
 .
 
 
-+!encounter_queue(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY,Sender)
-:  iden::sameSetp & iden::newMember & not lock::mapMerging(_)  & not iden::identifying(_) 
++!encounter_queue(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)
+:    not lock::mapMerging(_)  & data::myent(Step,MLocalX,MLocalY,MyPosX,MyPosY,ObjX,ObjY) & (SLocalX == MLocalX | SLocalX == (-MLocalX)) & (SLocalY == MLocalY | SLocalY == (-MLocalY))
 <- 
-    +iden::identifying(encounter);
-    .wait(pos::agt_Pos(_, Step,  _, _));
-    ?data::myent(Step,MLocalX,MLocalY,MyPosX,MyPosY,ObjX,ObjY);
+    
+    //.wait(pos::agt_Pos(_, Step,  _, _));
+    
     ?team::members(Agt,MyID,AllAgtmbers,MyDeltaX,MyDeltaY);
     .my_name(Agt);
     //.print("Broadcast1 : receive -> Agt ", Agt ,"  Step :", Step," SenderI: ", SenderId, " Sender X: ", SenderX, " SenderY ", SenderY, " SlocalX ", SLocalX, " slocalY ",SLocalY);
     //.print("MY Local X ", MLocalX, " My local Y: ", MLocalY , " My id ",MyID);
-    
-    if ( SLocalX == MLocalX | SLocalX == (-MLocalX) | SLocalY == MLocalY | SLocalY == (-MLocalY) )
-    {
+    //.print("This is satrt ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
+    //.print("What is start, my location", MyPosX," ", MyPosY);
+    //.print("SlocalX ",SLocalX , ",MlocalX  ", MLocalX, ", SlocalY ", SLocalY, ", ", MLocalY );
+    //.print("IDs: MyID",MyID, "Sender Id",SenderId);
         
         if ( MyID > SenderId )
         {
 
             // Calculate offset of coordinate
             !updateMessageList(Sender);
-            -iden::identifying(encounter);
         }
         elif (SenderId > MyID)
         {            
@@ -77,17 +72,18 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
             // Add it to receiveFrom List
             !updateMessageList(Sender);
             .send(Sender,achieve, com::comfirmMailList);
-            !merging_prepare( DeltaX, DeltaY,SenderId);
+            
+            !merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender);
             .print("Begin merging, sender is ", Sender );
         }                    
         
-    } 
-    -data::myent(_,_,_,_,_,_,_);
+    
+    //-data::myent(_,_,_,_,_,_,_);
     -iden::newMember;
     -iden::sameSetp;
     
     .
-+!encounter_queue(Step,SenderId,SenderX,SenderY,SLocalX,SLocalY,Sender)
++!encounter_queue(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)
 <-
     !skip;
     .
@@ -95,14 +91,22 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 
 
 +!updateMessageList(ContactInfo)
+: team::emailGroup(Slist)
 <-
     
-    ?team::emailGroup(Slist);
+    
     .union([ContactInfo],Slist,NewSlist);
     +team::emailGroup(NewSlist);
     -team::emailGroup(Slist);
     
     .
+
++!updateMessageList(ContactInfo)
+: not team::emailGroup(_)
+<-
+    +team::emailGroup([ContactInfo]);
+.
+
 
 +!comfirmMailList[source(Sender)]
 <-
@@ -132,17 +136,18 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 +!broadcastMessage(Agents, DeltaX, DeltaY, NewId) 
 <- 
     for (.member(R, Agents)) {
-        .send(R, achieve, com::merging_prepare(DeltaX, DeltaY, NewId));
+        .send(R, achieve, merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY));
     }
         .
 
 // Mergering : goal
-+!merging_map( DeltaX, DeltaY)
+ +!merging_map_goa( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
 : .my_name(Agt) & stock::agt_Map_Goa(GoaList)
 <-
     
 
     +lock::mapMerging(goa);
+    .print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
     .print("updata Map Goal Offset is ", DeltaX," and ",DeltaY, ", The Original GoaList: ", GoaList);
     .setof([NX,NY], (.member([AX,AY], GoaList)& NX = AX + DeltaX & NY= AY + DeltaY), NewGoaList);
     .print("After Merging GoaList:", NewGoaList);
@@ -150,29 +155,39 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     -stock::agt_Map_Goa(_);
     +stock::agt_Map_Goa(NewGoaList);
     -lock::mapMerging(goa);
-    
+        
+    . 
++!merging_map_goa( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+<-
+    .print(" merg goa fail");
     .
-
 // Mergering : Obstacle
-+!merging_map( DeltaX, DeltaY)
++!merging_map_obs( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
 : .my_name(Agt) & stock::agt_Map_Obs(ObsList)
 <- 
     +lock::mapMerging(obs);
+    .print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
     .print("updata Map Obs"," Offset is ", DeltaX," and ",DeltaY, ", The Original ObsList:", ObsList);
-    .setof([NX,NY], (.member([AX,AY], ObsList)& NX = AX + DeltaX & NY= AY + DeltaY), NewObsList);
+    .setof([NX,NY], (.member([AX,AY], ObsList) & NX = AX + DeltaX & NY= AY + DeltaY), NewObsList);
     .print("After Merging NewObsList:", NewObsList);
     //!update_list(ObsList, DeltaX, DeltaY, NewObsList); 
     -stock::agt_Map_Obs(_);
     +stock::agt_Map_Obs( NewObsList);
     -lock::mapMerging(obs);
+    
+    .
++!merging_map_obs( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+<-
+    .print(" merg obs fail");
     .
 
 // Mergering : Dispenser
-+!merging_map( DeltaX, DeltaY)
-: .my_name(Agt) & stock::agt_Map_Dis(Agt, Step, DisList,DisType)
++!merging_map_dis( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+: .my_name(Agt) & stock::agt_Map_Dis(DisList)
 <-  
     +lock::mapMerging(dis);
     .print("updata Map Dispenser");
+    .print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
     .print("updata Map Dis"," Offset is ", DeltaX," and ",DeltaY, ", Original DisList:", DisList);
     .setof([NX,NY,Type], (.member([AX,AY,Type], DisList)& NX = AX + DeltaX & NY= AY + DeltaY), NewDisList);
     .print("After Merging NewDisList:", NewDisList);
@@ -180,10 +195,15 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     -stock::agt_Map_Dis( DisList);
     +stock::agt_Map_Dis( NewDisList);
     -lock::mapMerging(dis);
+    
     .
-
-+!merging_map( DeltaX, DeltaY)
-: .my_name(Agt) & stock::agt_Map_Blo(Agt, Step, BloList,BloType)
++!merging_map_dis( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+<-
+    .print(" merg dis fail");
+    .
+//Bolock
++!merging_map_blo( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+: .my_name(Agt) & stock::agt_Map_Blo(BloList)
 <-  
     +lock::mapMerging(blo);
     .print("updata Map Block");
@@ -195,26 +215,38 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     +stock::agt_Map_Blo(Agt, Step, NewBloList,BloType);
     -lock::mapMerging(blo);
     .
-
-+!merging_prepare( DeltaX, DeltaY,SenderId)
-: team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID < SenderId & pos::agt_Pos(_, Step,MyPosX,MyPosY) & lock::allow_update_location
++!merging_map_blo( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
 <-
-    -lock::allow_update_location;
-    -iden::identifying(encounter);
+    .print(" merg blo fail");
+    .
++!merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)
+: team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID < SenderId & pos::agt_Pos(Agt, _ ,MyPosX,MyPosY) & lock::allow_update_location
+<-
+    
+    
     +lock::mapMerging(pre);
     // Infected to the same level as the Leader
     .my_name(Agt);
-    +team::members(Agt,SenderId,AllMembers,DeltaX,DeltaY);
-    -team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY);
+    
+    
     NewPosX = MyPosX + DeltaX ;
     NewPosY = MyPosY + DeltaY ;
-    .print("old aix is ", MyPosX, " ", MyPosY, " New is ", NewPosX, " and ", NewPosY, "Deltaa is ", DeltaX , " ", DeltaY, "sendid is ",SenderId);
+    .print("old aix is ", MyPosX, " ", MyPosY, " New is ", NewPosX, " ", NewPosY, " Deltaa is ", DeltaX , " ", DeltaY, " sendid is ",SenderId);
+    -lock::allow_update_location;
     -pos::agt_Pos(_,_,_,_);
     +pos::agt_Pos(Agt,Step ,NewPosX ,NewPosY);
-    
-    !merging_map(DeltaX, DeltaY);
-    -lock::mapMerging(pre);
     +lock::allow_update_location;
+
+    -team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY);
+    +team::members(Agt,SenderId,AllMembers,DeltaX,DeltaY);
+
+    !merging_map_blo( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender,DeltaX, DeltaY);
+    !merging_map_dis( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender,DeltaX, DeltaY);
+    !merging_map_goa( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender,DeltaX, DeltaY);
+    !merging_map_obs( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender,DeltaX, DeltaY);
+    -lock::mapMerging(pre);
+    
+    
 /*     if(team::emailGroup(Slist))
     {
         !broadcastMessage(Slist,DeltaX,DeltaY, SenderId);
@@ -223,12 +255,12 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     
     .
 
-+!merging_prepare( DeltaX, DeltaY,SenderId)
++!merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)
 : not lock::allow_update_location
 <-
-    !merging_prepare( DeltaX, DeltaY,SenderId);
+    !merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender);
 .
-/* +!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
+/* +!merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)[source(Sender)]
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID > SenderId
 <-
 
@@ -238,20 +270,17 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     
     . */
 
-+!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
++!merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender)
 : team::members(Agt,MyID,AllMembers,MyDeltaX,MyDeltaY) & MyID == SenderId
 <-
     .print("We are the same. Do nothing  ", MyID);
     .
-+!merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
-<-
-    !merging_prepare( DeltaX, DeltaY,SenderId)[source(Sender)]
-.
++!merging_prepare( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender) : true .
 // Things Database is empty
-+!merging_map( DeltaX, DeltaY)
-: not stock::agt_Map_Dis(Agt, Step, DisList) & not stock::agt_Map_Obs(ObsList) & not stock::agt_Map_Goa(GoaList)
++!merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX, DeltaY)
+: true
 <-
-    !skip   
+    .print("Merging Fail.");
      .
 
 
@@ -259,7 +288,7 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 
 
 
-+!merging_map(DeltaX,DeltaY)
++!merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX,DeltaY)
 : stock::agt_Map_Edg_Y_N(Y)
 <- 
 
@@ -269,7 +298,7 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
 
     .
 
-+!merging_map(DeltaX,DeltaY)
++!merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX,DeltaY)
 : stock::agt_Map_Edg_Y_S(Y)
 <- 
     
@@ -279,7 +308,7 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     
     .
 
-+!merging_map(DeltaX,DeltaY)
++!merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX,DeltaY)
 : stock::agt_Map_Edg_X_W(X)
 <- 
     NX = X + DeltaX;
@@ -287,7 +316,7 @@ delta(Leader,Teammate,Delta) :- Delta = (Leader - Teammate).
     +stock::agt_Map_Edg_X_W(NX);
     .
 
-+!merging_map(DeltaX,DeltaY)
++!merging_map( DeltaX, DeltaY,Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY,Sender, DeltaX,DeltaY)
 : stock::agt_Map_Edg_X_E(X)
 <- 
     NX = X + DeltaX;
