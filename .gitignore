@@ -12,7 +12,8 @@ monitor/js/*.js
 .idea
 *.DS_Store
 docs/*.html
-.gradle
+*.gradle
+mas.log
 gradle/
 graphs
 results
