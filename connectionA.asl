@@ -32,11 +32,11 @@ block_type(BlockDir, BlockType) :-
 	thing(Nx, Ny, block, BlockType).
 
 
-cc_rotation(BOrientation,ROrientation) :- .nth(IDX,[s,e,n,w],BOrientation) &
-	.nth(((IDX+1) mod 4 ),[s,e,n,w],ROrientation).
+cw_rotation(BOrientation,ROrientation) :- .nth(IDX,[s,w,n,e],BOrientation) &
+	.nth(((IDX+1) mod 4 ),[s,w,n,e],ROrientation).
 
-ccw_rotation(BOrientation,ROrientation) :- .nth(IDX,[s,w,n,e],BOrientation) &
-	.nth(((IDX+1) mod 4) ,[s,e,n,w],ROrientation).
+ccw_rotation(BOrientation,ROrientation) :- .nth(IDX,[s,e,n,w],BOrientation) &
+	.nth(((IDX+1) mod 4),[s,e,n,w],ROrientation).
 
 /* Initial beliefs */
 
@@ -125,21 +125,18 @@ loseStreak(0).
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)])&not claimedTask(TName),T) 
 	& not .empty(T) & .nth(0,T,t(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
 	<- .print(PickedTask); .broadcast(tell, claimedTask(TaskName)); +my_task(TaskName,s).
-+!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)]),T) <- .print("why:", T).
++!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y),task(TName,_,_,[req(X,Y,BType)])&not claimedTask(TName),T) <- .print("why:", T).
++!pickTask(BType,TaskName,Orientation) : .print("No applicable unclaimed task").
 
 
 +!submitTask : my_task(TaskName,TOrientation) & attached_block(TOrientation,BType) <- submit(TaskName).
-+!submitTask : my_task(TaskName,TOrientation) & attached_block(BOrientation,BType) & not (TOrientation == BOrientation) & cc_rotation(BOrientation,ROrientation) <-
++!submitTask : not my_task(TaskName,_) & attached_block(BType,_) <- !pickTask(BType,TaskName,Orientation).
++!submitTask : my_task(TaskName,TOrientation) & attached_block(BOrientation,BType) & not (TOrientation == BOrientation) & cw_rotation(BOrientation,ROrientation) <-
+	.print(BOrientation, "->", ROrientation);
 	-attached_block(BOrientation,BType);
 	+attached_block(ROrientation,BType);
-	rotate(cc).
-
-+!submitTask : not my_task(TaskName,_) & attached_block(BType,_) <- !pickTask(BType,TaskName,Orientation).
+	rotate(cw).
 +!submitTask : true <- 
-  .print("my task : ",TaskName);
-  .print("Task orientation xxx : ",TOrientation);
-  .print("Block orientation xxx : ",BOrientation);
-  .print("block type : ",BType);
   .print("There is no block, how did we get here?").
 
 @update[atomic]
@@ -147,6 +144,8 @@ loseStreak(0).
 
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
 	<- -me(X,Y); +me(NX,NY).
+//+!updateMyPos : lastActionResult(failed) & lastAction(rotate) & attached_block(Pos, B) & ccw_rotation(Pos, NPos) 
+//	<- -attached_block(Pos, B); +attached_block(NPos, B).
 +!updateMyPos : true <- .print("No change").
 
 +!updateMyAttached : lastActionResult(success) & lastActionParams(ActionParams) & 
