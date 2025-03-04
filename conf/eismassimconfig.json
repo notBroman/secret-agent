@@ -8,10 +8,10 @@
   "notifications": false,
   "queued": false,
   "entities": [
-    {"name": "connectionA1", "username": "A1", "password": "1", "print-iilang": false, "print-json": false},
-    {"name": "connectionA2", "username": "A2", "password": "1", "print-iilang": false, "print-json": false},
-    {"name": "connectionA3", "username": "A3", "password": "1", "print-iilang": false, "print-json": false},
-    {"name": "connectionA4", "username": "A4", "password": "1", "print-iilang": false, "print-json": false},
-    {"name": "connectionA5", "username": "A5", "password": "1", "print-iilang": false, "print-json": false}
+    {"name": "connectionA1", "username": "B1", "password": "1", "print-iilang": false, "print-json": false},
+    {"name": "connectionA2", "username": "B2", "password": "1", "print-iilang": false, "print-json": false},
+    {"name": "connectionA3", "username": "B3", "password": "1", "print-iilang": false, "print-json": false},
+    {"name": "connectionA4", "username": "B4", "password": "1", "print-iilang": false, "print-json": false},
+    {"name": "connectionA5", "username": "B5", "password": "1", "print-iilang": false, "print-json": false}
   ]
 }

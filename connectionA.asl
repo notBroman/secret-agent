@@ -90,10 +90,9 @@ loseStreak(0).
 // fail safe
 +!think : true <- .print("(╭ರ_•́)").
 
-//+!explore : true <- !move_random.
-+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
++!explore : true <- !move_random.
++!move_random : .random([n,s,e,w],Dir)
 	<- move(Dir).
-	.
 
 // terminal conditions
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
