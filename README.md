@@ -8,8 +8,8 @@ Clone this repo into a folder using alongside the server:
 
 # Running the things
 
-1. Go into the server and start it using `./gradlew`
-2. Go into the agent and start it using `./gradlew`
+1. Go into the server and start it using `gradle`
+2. Go into the agent and start it using `gradle`
 
 # Deveopment
 
