@@ -94,7 +94,7 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
     
 
 +obstacle(ObsX,ObsY)
-: lastAction(move)   & actionID(S) 
+: lastAction(move)   & actionID(S) & not lock::mapMerging(obs)
 <-  
     .wait({+pos::agt_Pos(_, S,  _, _)});
     ?pos::agt_Pos(_ ,S,  OX, OY);    
@@ -111,7 +111,7 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
 
 
 +goal(GoaX,GoaY)
-: lastAction(move) & actionID(S)  
+: lastAction(move) & actionID(S)  & not lock::mapMerging(goa)
 <-  
     .wait({+pos::agt_Pos(_, S,  _, _)});
     ?pos::agt_Pos(_ ,S,  GX, GY);    
@@ -129,7 +129,7 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
     .
 
 +thing(DisX,DisY,dispenser,Detail)
-:  lastAction(move) & actionID(S)  
+:  actionID(S)  & not lock::mapMerging(dis)
 <-  
     .wait({+pos::agt_Pos(_, S, _, _)});
     ?stock::agt_Map_Dis(DisL);    
@@ -146,7 +146,7 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
 
 
 +thing(BloX,BloY,block,Detail)
-: lastAction(move) & actionID(S) & not lock::mapMerging(blo)
+: actionID(S) & not lock::mapMerging(blo)
 <-
     .wait({+pos::agt_Pos(_, S,  _, _)});
     ?pos::agt_Pos(_ ,S,  Bx, By);
@@ -173,10 +173,10 @@ agtCoordinate (w, CX , CY , NewX , NewY) :-   NewX = (CX - 1) & NewY = CY.
     {
         .my_name(Me);
         .wait({+pos::agt_Pos(_, Step,  _, _)});    
-        ?pos::agt_Pos(Me, Step,  SenderOwnX, SenderOwnY);
+        ?pos::agt_Pos(_, Step,  SenderOwnX, SenderOwnY);
         
         SenderX = (SenderOwnX + SLocalX );
-        SenderY = (SenderOwnY + SLocalX); 
+        SenderY = (SenderOwnY + SLocalY); 
         
         //.print("What is worng ", Step, "My location in Sender X", SenderX, " ", SenderY , " Local ", SLocalX, " ", SLocalY , " Sender own", SenderOwnX, SenderOwnY );
         .broadcast(achieve,com::check_encounter(Step, SenderId, SenderX, SenderY, SLocalX, SLocalY,SenderOwnX,SenderOwnY));         
