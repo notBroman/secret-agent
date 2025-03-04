@@ -57,18 +57,12 @@ loseStreak(0).
 //deliberate on what to do
 // when to do exploration
 +!think : loseStreak(X) & X > 5 <- !thisIsNotWorking.
-+!think : lastActionResult(failed_path) & lastAction(move) & me(X,Y)
-	<- +destination(X+1,Y+1).
-+!think : not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_) 
-	<- !explore.
-+!think : attached_block(_,_) & not my_goal(X,Y) 
++!think : not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_) & not my_goal(X,Y) 
 	<- !explore.
 // get to the destination
 +!think : destination(_,_,_) 
 	<- .print("Go to destination"); !reach_destination.
-+!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b0(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
-+!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b1(X,Y) & not destination(_,_,_) 
++!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & (my_b0(X,Y) | my_b1(X,Y)) & not destination(_,_,_) 
 	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
 +!think : attached_block(_,_) & my_goal(X,Y) & not me(X,Y) <- +destination(X,Y,g); !reach_destination.
 // what to do when at dispenser
@@ -89,62 +83,9 @@ loseStreak(0).
 +!think : true <- .print("(╭ರ_•́)").
 
 //+!explore : true <- !move_random.
-//+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
-//<-	move(Dir).
-
-@explore[atomic] 	
-+!explore: explore(Dir) & me(X,Y) <-
-	//check if the direction is sill valid
-	if(Dir = n &  (boundary(Y-1, n) |  thing(X,Y-1,obstacle,_))){
-		-explore(_);
-		!explore;
-	}elif(Dir = s & (boundary(Y+1, s) | thing(X,Y+1,obstacle,_))){
-		-explore(_);
-		!setexplore;
-	}elif(Dir = e & (boundary(X+1, e) | thing(X+1,Y,obstacle,_))){
-		-explore(_);
-		!setexplore;
-	}elif(Dir = w & (boundary(X-1, w) | thing(X-1,Y,obstacle,_))){
-		-explore(_);
-		!setexplore;
-	}.
-
-+!setexplore: .random(N) & random_dir([n,s,e,w],N,Dir) & me(X,Y) <-
-
-	-explore(_);
-
-	if(Dir = n & not (boundary(Y-1, n)) & not (thing(X,Y-1,obstacle,_))) {
-		+explore(n);
-	}elif(Dir = s & not (boundary(Y+1, s)) & not (thing(X,Y+1,obstacle,_))) {
-		+explore(s);
-	}elif(Dir = e & not (boundary(X+1, e)) & not (thing(X+1,Y,obstacle,_))) {
-		+explore(e);
-	}elif(Dir = w & not (boundary(X-1, w)) & not (thing(X-1,Y,obstacle,_))) {
-		+explore(w);
-	}
-	else{
-		!setexplore; 	
-	}.
-	
-
-+!flipexplore: explore(Dir) <-
-	if(Dir = n){
-		-explore(_);
-		+explore(e);
-	};
-	if(Dir = s){
-		-explore(_);
-		+explore(w);
-	};
-	if(Dir = e){
-		-explore(_);
-		+explore(s);
-	};
-	if(Dir = w){
-		-explore(_);
-		+explore(n);
-	}. 
-
++!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
+	<- move(Dir).
+	.
 
 // terminal conditions
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
@@ -181,7 +122,7 @@ loseStreak(0).
 +!submitTask : true <- .print("There is no block, how did we get here?").
 
 @update[atomic]
-+!update : true <- !updateMyPos; !updateMyAttached; !updateMyTask.
++!update : true <- !!updateMyPos; !!updateMyAttached; !!updateMyTask.
 
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
 	<- -me(X,Y); +me(NX,NY).
