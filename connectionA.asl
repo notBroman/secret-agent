@@ -66,16 +66,13 @@ loseStreak(0).
 //deliberate on what to do
 // when to do exploration
 +!think : loseStreak(X) & X > 5 <- !thisIsNotWorking.
-+!think : not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_) 
-	<- !explore.
-+!think : attached_block(_,_) & not my_goal(X,Y) 
+
++!think : (not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_)) | (attached_block(_,_) & not my_goal(X,Y) )
 	<- !explore.
 // get to the destination
 +!think : destination(_,_,_) 
 	<- .print("Go to destination"); !reach_destination.
-+!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b0(X,Y) & not destination(_,_,_) 
-	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
-+!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & my_b1(X,Y) & not destination(_,_,_) 
++!think : not adjacent_thing(D,dispenser) & not attached_block(_,_) & (my_b0(X,Y) | my_b1(X,Y)) & not destination(_,_,_) 
 	<- .print("Go to dispenser", D); +destination(X,Y,dispenser); !reach_destination.
 +!think : attached_block(_,_) & my_goal(X,Y) & not me(X,Y) <- +destination(X,Y,g); !reach_destination.
 // what to do when at dispenser
@@ -93,9 +90,10 @@ loseStreak(0).
 // fail safe
 +!think : true <- .print("(╭ರ_•́)").
 
-+!explore : true <- !move_random.
+//+!explore : true <- !move_random.
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
-<-	move(Dir).
+	<- move(Dir).
+	.
 
 // terminal conditions
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My) <- .print("We are next to a dispenser"); -destination(X,Y,T).
@@ -139,9 +137,8 @@ loseStreak(0).
   .print("There is no block, how did we get here?").
 
 @update[atomic]
-+!update : true <- !!updateMyPos; 
-	!!updateMyAttached; 
-	!!updateMyTask.
++!update : true <- !!updateMyPos; !!updateMyAttached; !!updateMyTask.
+
 
 +!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
 	<- -me(X,Y); +me(NX,NY).
@@ -157,6 +154,7 @@ loseStreak(0).
 +!updateMyAttached : true <- true.
 
 +!updateMyTask : my_task(_,_) & lastAction(submit) & lastActionResult(success) <- -my_task(_,_).
++!updateMyTask : lastActionResult(failed_target) <- -my_task(_,_).
 +!updateMyTask : true <- true.
 
 +!countFail : not lastActionResult(success) & loseStreak(Num) <- -loseStreak(Num); +loseStreak(Num+1).
