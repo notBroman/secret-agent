@@ -195,6 +195,7 @@ loseStreak(0).
 +!updateMyAttached : true <- true.
 
 +!updateMyTask : my_task(_,_) & lastAction(submit) & lastActionResult(success) <- -my_task(_,_).
++!updateMyTask : lastActionResult(failed_target) <- -my_task(_,_).
 +!updateMyTask : true <- true.
 
 +!countFail : not lastActionResult(success) & loseStreak(Num) <- -loseStreak(Num); +loseStreak(Num+1).
