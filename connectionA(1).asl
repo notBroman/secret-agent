@@ -48,7 +48,7 @@ loseStreak(0).
     <- !submitTask.
 +!think : true <- .print("(╭ರ_•́)").
 
-// Fallback exploration: if no other explore plan applies, move randomly.
+// if no other explore plan applies, move randomly.
 +!explore : true <- !move_random.
 
 @explore[atomic]     
@@ -104,21 +104,7 @@ loseStreak(0).
 +!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
 <- move(Dir).
 
-+!makeAction : currentState(exploring) & currentPosition(X, Y) <-
-    .print("Exploring");
-    !setexplore;
-    if(lastAction(move) & lastActionResult(failed_path) & lastActionParams(DirP) & .nth(0,DirP,Dir) & attached(Xa,Ya)) {
-        handle_failed_rotation(Dir, Xa, Ya);
-    } elif(explore(Dir)) {
-        !moveAndUpdate(Dir, X, Y);
-    } else {
-        !move_random;
-    }.
-
-+!makeAction : currentState(chilling) <-
-    .print("Skipping my action");
-    !skip.
-
+// makeAction plan.
 +!makeAction : true <-
     .print("Moving randomly");
     !move_random.
@@ -168,13 +154,15 @@ loseStreak(0).
 @update[atomic]
 +!update : true <- !updateMyPos; !updateMyAttached; !updateMyTask.
 
-+!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) & lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) & cardinalDirToNum(LastAction,X,Y,NX,NY)
++!updateMyPos : lastActionResult(success) & lastActionParams(ActionParams) &
+                 lastAction(move) & .nth(0,ActionParams,LastAction) & me(X,Y) &
+                 cardinalDirToNum(LastAction,X,Y,NX,NY)
     <- -me(X,Y); +me(NX,NY).
 +!updateMyPos : true <- .print("No change").
 
 +!updateMyAttached : lastActionResult(success) & lastActionParams(ActionParams) &
-            lastAction(attach) & .nth(0,ActionParams,Dir) &
-            block_type(Dir,BType)
+                      lastAction(attach) & .nth(0,ActionParams,Dir) &
+                      block_type(Dir,BType)
     <- +attached_block(Dir,BType).
 +!updateMyAttached : lastActionResult(success) & lastAction(submit) & attached_block(A, B)
     <- -attached_block(A, B).
@@ -225,3 +213,4 @@ is_adjacent(X,Y) :- distance(X,Y,R) & R == 1.
 block_type(BlockDir, BlockType) :-
     cardinalDirToNum(BlockDir, 0, 0, Nx, Ny) &
     thing(Nx, Ny, block, BlockType).
+
