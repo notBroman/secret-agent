@@ -49,7 +49,7 @@ loseStreak(0).
 +!think : true <- .print("(╭ರ_•́)").
 
 // if no other explore plan applies, move randomly.
-+!explore : true <- !move_random.
+//+!explore : true <- !move_random.
 
 @explore[atomic]     
 +!explore: explore(Dir) & me(X,Y) <-
@@ -67,6 +67,8 @@ loseStreak(0).
         -explore(_);
         !setexplore;
     }.
+
++!explore : true <- !setexplore.
 
 +!setexplore: .random(N) & random_dir([n,s,e,w],N,Dir) & me(X,Y) <-
     -explore(_);
@@ -213,4 +215,5 @@ is_adjacent(X,Y) :- distance(X,Y,R) & R == 1.
 block_type(BlockDir, BlockType) :-
     cardinalDirToNum(BlockDir, 0, 0, Nx, Ny) &
     thing(Nx, Ny, block, BlockType).
+
 
