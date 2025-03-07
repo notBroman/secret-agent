@@ -23,7 +23,6 @@ loseStreak(0).
     <- +destination(X+1,Y+1).
 +!think : not attached_block(_,_) & not my_b0(_,_) & not my_b1(_,_)
     <- !explore.
-// If holding a block but no goal seen, explicitly explore for one
 +!think : attached_block(_,_) & not my_goal(X,Y)
     <- .print("Attached block but no goal seen, exploring..."); !explore.
 +!think : destination(_,_,_)
@@ -48,70 +47,54 @@ loseStreak(0).
     <- !submitTask.
 +!think : true <- .print("(╭ರ_•́)").
 
-// if no other explore plan applies, move randomly.
-//+!explore : true <- !move_random.
+
++!explore : not explore(_) <- !setexplore.
 
 @explore[atomic]     
 +!explore: explore(Dir) & me(X,Y) <-
     // Check if the current explore direction is still valid
     if(Dir = n & (boundary(Y-1, n) | thing(X,Y-1,obstacle,_))){
+        .print("Explore: Direction n invalid, calling setexplore");
         -explore(_);
-        !explore;
+        !setexplore;
     } elif(Dir = s & (boundary(Y+1, s) | thing(X,Y+1,obstacle,_))){
+        .print("Explore: Direction s invalid, calling setexplore");
         -explore(_);
         !setexplore;
     } elif(Dir = e & (boundary(X+1, e) | thing(X+1,Y,obstacle,_))){
+        .print("Explore: Direction e invalid, calling setexplore");
         -explore(_);
         !setexplore;
     } elif(Dir = w & (boundary(X-1, w) | thing(X-1,Y,obstacle,_))){
+        .print("Explore: Direction w invalid, calling setexplore");
         -explore(_);
         !setexplore;
+    } else {
+        .print("Explore: Valid direction", Dir, "- moving");
+        move(Dir)
     }.
 
-+!explore : true <- !setexplore.
-
 +!setexplore: .random(N) & random_dir([n,s,e,w],N,Dir) & me(X,Y) <-
+    .print("setexplore: random number =", N, "chosen Dir =", Dir);
     -explore(_);
     if(Dir = n & not (boundary(Y-1, n)) & not (thing(X,Y-1,obstacle,_))) {
+        .print("setexplore: setting direction n");
         +explore(n);
     } elif(Dir = s & not (boundary(Y+1, s)) & not (thing(X,Y+1,obstacle,_))) {
+        .print("setexplore: setting direction s");
         +explore(s);
     } elif(Dir = e & not (boundary(X+1, e)) & not (thing(X+1,Y,obstacle,_))) {
+        .print("setexplore: setting direction e");
         +explore(e);
     } elif(Dir = w & not (boundary(X-1, w)) & not (thing(X-1,Y,obstacle,_))) {
+        .print("setexplore: setting direction w");
         +explore(w);
     } else{
+        .print("setexplore: invalid Dir", Dir, "retrying...");
         !setexplore;   
     }.
 
-+!flipexplore: explore(Dir) <-
-    if(Dir = n){
-        -explore(_);
-        +explore(e);
-    };
-    if(Dir = s){
-        -explore(_);
-        +explore(w);
-    };
-    if(Dir = e){
-        -explore(_);
-        +explore(s);
-    };
-    if(Dir = w){
-        -explore(_);
-        +explore(n);
-    }.
-
-// move_random to prevent missing plan errors.
-+!move_random : .random(RandomNumber) & random_dir([n,s,e,w],RandomNumber,Dir)
-<- move(Dir).
-
-// makeAction plan.
-+!makeAction : true <-
-    .print("Moving randomly");
-    !move_random.
-
-// Terminal conditions and movement logic
+// movement logic
 +!reach_destination : me(Mx,My) & destination(X,Y,T) & T == dispenser & is_adjacent(X-Mx,Y-My)
     <- .print("We are next to a dispenser"); -destination(X,Y,T).
 +!reach_destination : me(X,Y) & destination(X,Y,T) & T == g
@@ -123,8 +106,6 @@ loseStreak(0).
 +!reach_destination : me(Mx,My) & (my_b0(X,Y) | my_b1(X,Y))
     <- !move_random.
 +!reach_destination : true <- .print("DBG MSG"); skip.
-
-// Updated addGoals: if no goal is in vision and the agent holds a block, explore for one.
 +!addGoals : not my_goal(_,_) & goal(X,Y) & me(Mx,My)
     <- +my_goal(X + Mx,Y + My).
 +!addGoals : not my_goal(_,_) & not goal(_,_) & attached_block(_, _)
@@ -142,7 +123,7 @@ loseStreak(0).
 
 +!requestBlock(Dir) : true <- request(Dir).
 
-// Task picking with fallback: if no tasks match, explore for one.
+// find all tasks with just one block of given type
 +!pickTask(BType,TaskName,Orientation) : .findall(t(TName,X,Y), task(TName,_,_,[req(X,Y,BType)]) & not claimedTask(TName), T)
     & not .empty(T) & .nth(0,T, t(TaskName,TX,TY)) & numToCardinalDir(TX,TY,Car)
     <- .print("PickedTask:", TaskName); .broadcast(tell, claimedTask(TaskName)); +my_task(TaskName,s).
@@ -215,5 +196,6 @@ is_adjacent(X,Y) :- distance(X,Y,R) & R == 1.
 block_type(BlockDir, BlockType) :-
     cardinalDirToNum(BlockDir, 0, 0, Nx, Ny) &
     thing(Nx, Ny, block, BlockType).
+
 
 
